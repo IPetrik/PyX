@@ -1,0 +1,75 @@
+\documentclass{manual}
+
+% to shorten edit-compile-view cycles use
+% \includeonly{graph}
+
+\usepackage{pyx}
+\ifhtml % redefine the PyX macro for html (the other makes trouble)
+\def\PyX{PyX}
+\fi
+\ifhtml % make double quotes available in html
+\def\textquotedbl{"}
+\fi
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage{tabularx} % TODO: get rid of that
+\usepackage{units}    % TODO: get rid of that
+
+\title{\PyX{} Reference Manual}
+\author{J\"org Lehmann\\
+Andr\'e Wobst}
+\authoraddress{http://pyx.sourceforge.net/}
+\date{\today}
+\release{\input{pyxversion.tex}}
+
+\makeindex
+
+\begin{document}
+
+\maketitle
+
+\ifhtml % make abstact better available (as in the Python docs)
+\chapter*{Front Matter\label{front}}
+\fi
+\begin{abstract}
+\noindent
+\PyX{} is a Python package to create encapsulated PostScript figures. It
+provides classes and methods to access basic PostScript functionality
+at an abstract level. At the same time the emerging structures are
+very convenient to produce all kinds of drawings in a non-interactive
+way. In combination with the Python language itself the user can just
+code any complexity of the figure wanted. Additionally an
+\TeX{}/\LaTeX{} interface enables one to use the famous high quality
+typesetting within the figures.
+
+A major part of \PyX{} on top of the already described basis is the
+provision of high level functionality for complex tasks like 2d plots
+in publication-ready quality.
+\end{abstract}
+
+\tableofcontents
+
+\include{intro}
+\include{graphics}
+\include{path}
+\include{canvas}
+\include{text}
+\include{graph}
+\include{axis}
+\include{box}
+\include{connector}
+\include{epsfile}
+\include{bbox}
+\include{color}
+\include{unit}
+\include{trafo}
+\appendix
+\include{mathtree}
+\include{colorname}
+\include{palettename}
+\include{pathstyles}
+\include{arrows}
+
+\input{manual.ind}
+
+\end{document}
