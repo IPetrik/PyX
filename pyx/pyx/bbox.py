@@ -35,107 +35,107 @@ class _bbox:
     This variant requires points in the constructor, and is used for internal
     purposes."""
 
-    def __init__(self, llx_pt, lly_pt, urx_pt, ury_pt):
-        self.llx_pt = llx_pt
-        self.lly_pt = lly_pt
-        self.urx_pt = urx_pt
-        self.ury_pt = ury_pt
+    def __init__(self, llx, lly, urx, ury):
+        self.llx = llx
+        self.lly = lly
+        self.urx = urx
+        self.ury = ury
 
     def __add__(self, other):
         """join two bboxes"""
-        return _bbox(min(self.llx_pt, other.llx_pt), min(self.lly_pt, other.lly_pt),
-                     max(self.urx_pt, other.urx_pt), max(self.ury_pt, other.ury_pt))
+        return _bbox(min(self.llx, other.llx), min(self.lly, other.lly),
+                     max(self.urx, other.urx), max(self.ury, other.ury))
 
     def __iadd__(self, other):
         """join two bboxes inplace"""
-        self.llx_pt = min(self.llx_pt, other.llx_pt)
-        self.lly_pt = min(self.lly_pt, other.lly_pt)
-        self.urx_pt = max(self.urx_pt, other.urx_pt)
-        self.ury_pt = max(self.ury_pt, other.ury_pt)
+        self.llx = min(self.llx, other.llx)
+        self.lly = min(self.lly, other.lly)
+        self.urx = max(self.urx, other.urx)
+        self.ury = max(self.ury, other.ury)
         return self
 
     def __mul__(self, other):
         """return intersection of two bboxes"""
-        return _bbox(max(self.llx_pt, other.llx_pt), max(self.lly_pt, other.lly_pt),
-                     min(self.urx_pt, other.urx_pt), min(self.ury_pt, other.ury_pt))
+        return _bbox(max(self.llx, other.llx), max(self.lly, other.lly),
+                     min(self.urx, other.urx), min(self.ury, other.ury))
 
     def __imul__(self, other):
         """intersect two bboxes in place"""
-        self.llx_pt = max(self.llx_pt, other.llx_pt)
-        self.lly_pt = max(self.lly_pt, other.lly_pt)
-        self.urx_pt = min(self.urx_pt, other.urx_pt)
-        self.ury_pt = min(self.ury_pt, other.ury_pt)
+        self.llx = max(self.llx, other.llx)
+        self.lly = max(self.lly, other.lly)
+        self.urx = min(self.urx, other.urx)
+        self.ury = min(self.ury, other.ury)
         return self
 
     def __str__(self):
-        return "%s %s %s %s" % (self.llx_pt, self.lly_pt, self.urx_pt, self.ury_pt)
+        return "%s %s %s %s" % (self.llx, self.lly, self.urx, self.ury)
 
     def outputPS(self, file):
         file.write("%%%%BoundingBox: %d %d %d %d\n" %
-                   (math.floor(self.llx_pt), math.floor(self.lly_pt),
-                    math.ceil(self.urx_pt), math.ceil(self.ury_pt)))
+                   (math.floor(self.llx), math.floor(self.lly),
+                    math.ceil(self.urx), math.ceil(self.ury)))
         file.write("%%%%HiResBoundingBox: %g %g %g %g\n" %
-                   (self.llx_pt, self.lly_pt, self.urx_pt, self.ury_pt))
+                   (self.llx, self.lly, self.urx, self.ury))
 
     def outputPDF(self, file):
         file.write("/MediaBox [%d %d %d %d]\n" %
-                   (math.floor(self.llx_pt), math.floor(self.lly_pt),
-                    math.ceil(self.urx_pt), math.ceil(self.ury_pt)))
+                   (math.floor(self.llx), math.floor(self.lly),
+                    math.ceil(self.urx), math.ceil(self.ury)))
 
     def intersects(self, other):
         """check, if two bboxes intersect eachother"""
-        return not (self.llx_pt > other.urx_pt or
-                    self.lly_pt > other.ury_pt or
-                    self.urx_pt < other.llx_pt or
-                    self.ury_pt < other.lly_pt)
+        return not (self.llx > other.urx or
+                    self.lly > other.ury or
+                    self.urx < other.llx or
+                    self.ury < other.lly)
 
     def transform(self, trafo):
         """transform bbox in place by trafo"""
         # we have to transform all four corner points of the bbox
-        llx_pt, lly_pt = trafo._apply(self.llx_pt, self.lly_pt)
-        lrx, lry = trafo._apply(self.urx_pt, self.lly_pt)
-        urx_pt, ury_pt = trafo._apply(self.urx_pt, self.ury_pt)
-        ulx, uly = trafo._apply(self.llx_pt, self.ury_pt)
+        llx, lly = trafo._apply(self.llx, self.lly)
+        lrx, lry = trafo._apply(self.urx, self.lly)
+        urx, ury = trafo._apply(self.urx, self.ury)
+        ulx, uly = trafo._apply(self.llx, self.ury)
 
         # Now, by sorting, we obtain the lower left and upper right corner
         # of the new bounding box.
-        self.llx_pt = min(llx_pt, lrx, urx_pt, ulx)
-        self.lly_pt = min(lly_pt, lry, ury_pt, uly)
-        self.urx_pt = max(llx_pt, lrx, urx_pt, ulx)
-        self.ury_pt = max(lly_pt, lry, ury_pt, uly)
+        self.llx = min(llx, lrx, urx, ulx)
+        self.lly = min(lly, lry, ury, uly)
+        self.urx = max(llx, lrx, urx, ulx)
+        self.ury = max(lly, lry, ury, uly)
 
     def transformed(self, trafo):
         """return bbox transformed by trafo"""
         # we have to transform all four corner points of the bbox
-        llx_pt, lly_pt = trafo._apply(self.llx_pt, self.lly_pt)
-        lrx, lry = trafo._apply(self.urx_pt, self.lly_pt)
-        urx_pt, ury_pt = trafo._apply(self.urx_pt, self.ury_pt)
-        ulx, uly = trafo._apply(self.llx_pt, self.ury_pt)
+        llx, lly = trafo._apply(self.llx, self.lly)
+        lrx, lry = trafo._apply(self.urx, self.lly)
+        urx, ury = trafo._apply(self.urx, self.ury)
+        ulx, uly = trafo._apply(self.llx, self.ury)
 
         # Now, by sorting, we obtain the lower left and upper right corner
         # of the new bounding box. 
-        return _bbox(min(llx_pt, lrx, urx_pt, ulx), min(lly_pt, lry, ury_pt, uly),
-                     max(llx_pt, lrx, urx_pt, ulx), max(lly_pt, lry, ury_pt, uly))
+        return _bbox(min(llx, lrx, urx, ulx), min(lly, lry, ury, uly),
+                     max(llx, lrx, urx, ulx), max(lly, lry, ury, uly))
 
-    def enlarge(self, all=0, bottom=None, left=None, top=None, right=None):
+    def enlarged(self, all=0, bottom=None, left=None, top=None, right=None):
         """enlarge bbox in place
 
         all is used, if bottom, left, top and/or right are not given.
 
         """
-        bottom_pt = left_pt = top_pt = right_pt = unit.topt(unit.length(all, default_type="v"))
+        _bottom = _left = _top = _right = unit.topt(unit.length(all, default_type="v"))
         if bottom is not None:
-           bottom_pt = unit.topt(unit.length(bottom, default_type="v"))
+           _bottom = unit.topt(unit.length(bottom, default_type="v"))
         if left is not None:
-           left_pt = unit.topt(unit.length(left, default_type="v"))
+           _left = unit.topt(unit.length(left, default_type="v"))
         if top is not None:
-           top_pt = unit.topt(unit.length(top, default_type="v"))
+           _top = unit.topt(unit.length(top, default_type="v"))
         if right is not None:
-           right_pt = unit.topt(unit.length(right, default_type="v"))
-        self.llx_pt -= left_pt
-        self.lly_pt -= bottom_pt
-        self.urx_pt += right_pt
-        self.ury_pt += top_pt
+           _right = unit.topt(unit.length(right, default_type="v"))
+        self.llx -= _left
+        self.lly -= _bottom
+        self.urx += _right
+        self.ury += top
 
     def enlarged(self, all=0, bottom=None, left=None, top=None, right=None):
         """return bbox enlarged
@@ -143,57 +143,57 @@ class _bbox:
         all is used, if bottom, left, top and/or right are not given.
 
         """
-        bottom_pt = left_pt = top_pt = right_pt = unit.topt(unit.length(all, default_type="v"))
+        _bottom = _left = _top = _right = unit.topt(unit.length(all, default_type="v"))
         if bottom is not None:
-           bottom_pt = unit.topt(unit.length(bottom, default_type="v"))
+           _bottom = unit.topt(unit.length(bottom, default_type="v"))
         if left is not None:
-           left_pt = unit.topt(unit.length(left, default_type="v"))
+           _left = unit.topt(unit.length(left, default_type="v"))
         if top is not None:
-           top_pt = unit.topt(unit.length(top, default_type="v"))
+           _top = unit.topt(unit.length(top, default_type="v"))
         if right is not None:
-           right_pt = unit.topt(unit.length(right, default_type="v"))
-        return _bbox(self.llx_pt-left_pt, self.lly_pt-bottom_pt, self.urx_pt+right_pt, self.ury_pt+top_pt)
+           _right = unit.topt(unit.length(right, default_type="v"))
+        return _bbox(self.llx-_left, self.lly-_bottom, self.urx+_right, self.ury+_top)
 
     def rect(self):
         """return rectangle corresponding to bbox"""
         import path
-        return path.rect_pt(self.llx_pt, self.lly_pt, self.urx_pt-self.llx_pt, self.ury_pt-self.lly_pt)
+        return path.rect_pt(self.llx, self.lly, self.urx-self.llx, self.ury-self.lly)
 
     path = rect
 
     def height(self):
         """return height of bbox"""
-        return unit.t_pt*(self.ury_pt-self.lly_pt)
+        return unit.t_pt(self.ury-self.lly)
 
     def width(self):
         """return width of bbox"""
-        return unit.t_pt*(self.urx_pt-self.llx_pt)
+        return unit.t_pt(self.urx-self.llx)
 
     def top(self):
         """return top coordinate of bbox"""
-        return unit.t_pt*(self.ury_pt)
+        return unit.t_pt(self.ury)
 
     def bottom(self):
         """return bottom coordinate of bbox"""
-        return unit.t_pt*(self.lly_pt)
+        return unit.t_pt(self.lly)
 
     def left(self):
         """return left coordinate of bbox"""
-        return unit.t_pt*(self.llx_pt)
+        return unit.t_pt(self.llx)
 
     def right(self):
         """return right coordinate of bbox"""
-        return unit.t_pt*(self.urx_pt)
+        return unit.t_pt(self.urx)
 
 
 class bbox(_bbox):
 
     """class for bounding boxes"""
 
-    def __init__(self, llx_pt, lly_pt, urx_pt, ury_pt):
-        llx_pt = unit.topt(llx_pt)
-        lly_pt = unit.topt(lly_pt)
-        urx_pt = unit.topt(urx_pt)
-        ury_pt = unit.topt(ury_pt)
-        _bbox.__init__(self, llx_pt, lly_pt, urx_pt, ury_pt)
+    def __init__(self, llx, lly, urx, ury):
+        llx = unit.topt(llx)
+        lly = unit.topt(lly)
+        urx = unit.topt(urx)
+        ury = unit.topt(ury)
+        _bbox.__init__(self, llx, lly, urx, ury)
 

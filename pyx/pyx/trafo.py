@@ -128,9 +128,12 @@ class trafo_pt(base.PSOp, attr.attr):
                 self.vector[1])
 
     def apply(self, x, y):
-        # for the transformation we have to convert to points
+        # before the transformation, we first have to convert to
+        # our internal unit (i.e. pts)
         tx, ty = self._apply(unit.topt(x), unit.topt(y))
-        return tx * unit.t_pt, ty * unit.t_pt
+
+        # the end result can be converted back to general lengths
+        return (unit.t_pt(tx), unit.t_pt(ty))
 
     def inverse(self):
         det = _det(self.matrix)                       # shouldn't be zero, but
