@@ -27,6 +27,5 @@
 
 CVSROOT /cvsroot/sitedocs/CVSROOT/cvstools/syncmail %{sVv} joergl@users.sourceforge.net
 
-# DEFAULT /cvsroot/sitedocs/CVSROOT/cvstools/syncmail %{sVv} pyx-checkins@lists.sourceforge.net
-DEFAULT /cvsroot/sitedocs/CVSROOT/cvstools/syncmail %{sVv} joergl@users.sourceforge.net
+DEFAULT /cvsroot/sitedocs/CVSROOT/cvstools/syncmail %{sVv} pyx-checkins@lists.sourceforge.net
 
