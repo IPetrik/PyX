@@ -1,0 +1,228 @@
+\chapter{Module text: \TeX/\LaTeX{} interface}
+\label{module:text}
+
+\section{Basic functionality}
+
+The \verb|text| module seamlessly integrates the famous typesetting
+technique of \TeX/\LaTeX{} into \PyX. The basic procedure is:
+\begin{itemize}
+\item start \TeX/\LaTeX{} as soon as text creation is requested
+\item create boxes containing the requested text on the fly
+\item immediately analyse the \TeX/\LaTeX{} output for errors etc.
+\item boxes are written into the dvi output
+\item box extents are immediately available (they are contained in the
+\TeX/\LaTeX{} output)
+\item as soon as PostScript needs to be written, stop \TeX/\LaTeX{},
+analyse the dvi output and generate the requested PostScript
+\item use Type1 fonts for the PostScript generation 
+\end{itemize}
+
+Note that in order that Type1 fonts can be used by \PyX, an
+appropriate \verb|psfonts.map| containing entries for the used fonts
+has to be present in your texmf tree.
+
+\section{The texrunner}
+Instances of the class \verb|texrunner| represent a \TeX/\LaTeX{}
+instance. The keyword arguments of the constructor are listed in the
+following table:
+
+\medskip
+\begin{tabularx}{\linewidth}{l>{\raggedright\arraybackslash}X}
+keyword&description\\
+\hline
+\texttt{mode}&\texttt{"tex"} (default) or \texttt{"latex"}\\
+\texttt{lfs}&Specifies a latex font size file to be used with \TeX{} (not in \LaTeX). Those files (with the suffix \texttt{.lfs}) can be created by \texttt{createlfs.tex}. Possible values are listed when a requested name could not be found.\\
+\texttt{docclass}&\LaTeX{} document class; default is \texttt{"article"}\\
+\texttt{docopt}&specifies options for the document class; default is \texttt{None}\\
+\texttt{usefiles}$^1$&access to \TeX/\LaTeX{} jobname files; default: \texttt{None}; example: \texttt{("spam.aux", "eggs.log")}\\
+\texttt{waitfortex}&wait this number of seconds for a \TeX/\LaTeX{} response; default \texttt{5}\\
+\texttt{texdebug}&filename to store \TeX/\LaTeX{} commands; default \texttt{None}\\
+\texttt{dvidebug}&dvi debug messages like \texttt{dvitype} (boolean); default \texttt{0}\\
+\texttt{errordebug}&verbose level of \TeX/\LaTeX{} error messages; valid values are \texttt{0}, \texttt{1} (default), \texttt{2}\\
+\texttt{dvicopy}&get rid of virtual fonts which \PyX{} cannot handle (boolean); default \texttt{0}\\
+\texttt{pyxgraphics}&enables the usage of the graphics package without further configuration (boolean); default 1\\
+\texttt{texmessagestart}$^{1,2}$&parsers for the \TeX/\LaTeX{} start message; default: \texttt{texmessage.start}\\
+\texttt{texmessagedocclass}$^{1,2}$&parsers for \LaTeX{}s \texttt{\textbackslash{}documentclass} statement; default: \texttt{texmessage.load}\\
+\texttt{texmessagebegindoc}$^{1,2}$&parsers for \LaTeX{}s \texttt{\textbackslash{}begin\{document\}} statement; default: \texttt{(texmessage.load, texmessage.noaux)}\\
+\texttt{texmessageend}$^{1,2}$&parsers for \TeX{}s \texttt{\textbackslash{}end}/ \LaTeX{}s \texttt{\textbackslash{}end\{document\}} statement; default: \texttt{texmessage.texend}\\
+\texttt{texmessagedefaultpreamble}$^{1,2}$&default parsers for preamble statements; default: \texttt{texmessage.load}\\
+\texttt{texmessagedefaultrun}$^{1,2}$&default parsers for text statements; default: \texttt{(texmessage.loadfd, texmessage.graphicsload)}\\
+\end{tabularx}
+\medskip
+
+$^1$
+The parameter might contain None, a single entry or a sequence of entries.
+
+$^2$
+\TeX/\LaTeX{} message parsers are described in more detail below.
+
+\medskip
+The \verb|texrunner| instance provides several methods to be called by
+the user. First there is a method called \verb|set|. It takes the same
+kewword arguments as the constructor and its purpose is to provide an
+access to the \verb|texrunner| settings for a given instance. This is
+important for the \verb|defaulttextunner|. The \verb|set| method
+fails, when a modification can't be applied anymore (e.g.
+\TeX/\LaTeX{} was already started).
+
+The \verb|preamble| method can be called before the \verb|text| method
+only (see below). It takes a \TeX/\LaTeX{} expression and optionally
+one or several \TeX/\LaTeX{} message parsers. The preamble expressions
+should be used to perform global settings, but should not create any
+\TeX/\LaTeX{} dvi output. In \LaTeX, the preamble expressions are
+inserted before the \verb|\begin{document}| statement. Note, that you
+can use \verb|\AtBeginDocument{...}| to postpone the direct
+evaluation.
+
+Finally there is a \verb|text| method. The first two parameters are
+the \verb|x| and \verb|y| position of the output to be generated. The
+third parameter is a \TeX/\LaTeX{} expression and further parameters
+are attributes for this command. Those attributes might be
+\TeX/\LaTeX{} settings as described below, \TeX/\LaTeX{} message
+parsers as described below as well, \PyX{} transformations, and \PyX{}
+fill styles (like colors). The \verb|text| method returns a box (see
+chapter~\ref{module:box}), which can be inserted into a canvas
+instance by its \verb|insert| method to get the text.
+
+Note that for the generation of the PostScript code the \TeX/\LaTeX{}
+instance must be terminated. However, a \TeX/\LaTeX{} instance is
+started again when the \verb|text| method is called again. A call of
+the \verb|preamble| method will still fail, but you can explicitly
+call the \verb|reset| method to allow for new \verb|preamble| settings
+as well. The \verb|reset| method takes a boolean parameter
+\verb|reinit| which can be set to run the old preamble settings.
+
+\section{\TeX/\LaTeX{} settings}
+
+\begin{description}
+\raggedright
+\item[Horizontal alignment:] \verb|halign.left| (default),
+\verb|halign.center|, \verb|halign.right|, \verb|halign(x)| (\verb|x|
+is a value between \verb|0| and \verb|1| standing for left and right,
+respectively)
+\item[Vertical box:] Usually, \TeX/\LaTeX{} expressions are handled in
+horizontal mode (so-called LR-mode in \TeX/\LaTeX; everything goes
+into a single line). You may use \verb|parbox(x)|, where \verb|x| is the
+width of the text, to switch to a multiline mode (so-called vertical
+mode in \TeX/\LaTeX).
+\begin{figure}
+\centerline{\includegraphics{textvalign}}
+\caption{valign example}
+\label{fig:textvalign}
+\end{figure}
+\item[Vertical alignment:] \verb|valign.top|, \verb|valign.middle|,
+\verb|valign.bottom|; when no \verb|parbox| is defined, additionally
+\verb|valign.baseline| (default); when \verb|parbox| is defined,
+additionally \verb|valign.topbaseline| (default),
+\verb|valign.middlebaseline|, and \verb|valign.bottombaseline|; see
+figure~\ref{fig:textvalign} for an example
+\item[Vertical shift:] \verb|vshift.char(lowerratio, heightstr="0")|
+(lowers the output by \verb|lowerratio| of the height of
+\verb|heightstr|), \verb|vshift.bottomzero=vshift.char(0)| (doesn't
+have an effect), \verb|vshift.middlezero=vshift.char(0.5)| (shifts
+down by half of the height of a \verb|0|),
+\verb|vshift.topzero=vshift.char(1)| (shifts down by the height of the a
+\verb|0|), \verb|vshift.mathaxis| (shifts down by the height of the
+mathematical axis)
+\item[Mathmode:] \verb|mathmode| switches the mathmode of \TeX/\LaTeX
+\item[Font size:] \verb|size.tiny|, \verb|size.scriptsize|,
+\verb|size.footnotesize|, \verb|size.small|, \verb|size.normalsize|
+(default), \verb|size.large|, \verb|size.Large|, \verb|size.LARGE|,
+\verb|size.huge|, \verb|size.Huge|
+\end{description}
+
+\section{Using the graphics-bundle with \LaTeX}
+
+The packages in \LaTeX-graphics bundle (color.sty, graphics.sty,
+graphicx.sty, \ldots) make extensive use of \verb|\special| commands. Here
+are some notes on this topic. Please install the appropriate driver file
+\verb|pyx.def|, which defines all the specials, in your \LaTeX-tree and add
+the content of both files \verb|color.cfg| and \verb|graphics.cfg| to your
+personal configuration files.\footnote{If you do not know what I am talking about
+right now -- just ignore this paragraph, but make sure not to set the
+\texttt{pyxgraphics} keyword to 0.} After you have installed the \verb|.cfg|
+files please use the \verb|text| module always with the \verb|pyxgraphics|
+keyword set to 0, this switches off a hack that might be convenient for less
+experienced \LaTeX-users.\medskip
+
+You can then import the packages of the graphics-bundle and related packages
+(e.g.~rotating, \ldots) with the option~\verb|pyx|, e.g.{}\\
+\rule{0.1\linewidth}{0sp}\verb|\usepackage[pyx]{color,graphicx}|\\
+Please note that the option~\verb|pyx| is only available with
+\verb|pyxgraphics=0| and a properly installed driver file. Otherwise do not
+use this option, omit it completely or say~\verb|[dvips]|.\medskip
+
+When defining colours in \LaTeX\ as one of the colour models \{\verb|gray|,
+\verb|cmyk|, \verb|rgb|, \verb|RGB|, \verb|hsb|\} then pyx will use the
+corresponding values (one to four real numbers) for output. When you use one of the
+\verb|named| colors in \LaTeX\ then pyx will use the corresponding predefined
+colour (see module \verb|color| and the colour table at the end of the
+manual).
+
+When importing eps-graphics in \LaTeX\ then pyx will rotate, scale and clip
+your file like you expect it. Note that pyx cannot import other graphics files
+than eps at the moment.\medskip
+
+For reference purpose, the following specials can be handled by the
+\verb|text| module at the moment:\medskip
+
+\begingroup
+\leftskip3em
+\parindent-3em
+\parskip0.5ex
+\texttt{PyX:color\_begin (model) (spec)}\\
+  starts a colour. (model)~is one of
+  \{\verb|gray|, \verb|cmyk|, \verb|rgb|, \verb|hsb|, \verb|texnamed|\}.
+  (spec)~depends on the model: a name or some numbers.\par
+\texttt{PyX:color\_end} ends a colour.\par
+\texttt{PyX:epsinclude file= llx= lly= urx= ury= width= height= clip=0/1}\\
+  includes an eps-file. The values of llx to ury are in the files' coordinate
+  system and specify the part of the graphics that should become the specified
+  width and height in the outcome. The graphics may be clipped. The last three
+  parameters are optional.\par
+\texttt{PyX:scale\_begin (x) (y)}\\
+  begins scaling from the current point.\par
+\texttt{PyX:scale\_end} ends scaling.\par
+\texttt{PyX:rotate\_begin (angle)} begins rotation around the current
+  point.\par
+\texttt{PyX:rotate\_end} ends rotation.\par
+\endgroup
+
+
+\section{\TeX/\LaTeX{} message parsers}
+
+Message parsers are used to scan the output of \TeX/\LaTeX. The output
+is analysed by a sequence of message parsers. Each of them analyses
+the output and remove those parts of the output, it feels responsible
+for. If there is nothing left in the end, the message got validated,
+otherwise an exception is raised reporting the problem.
+
+\medskip
+\begin{tabular}{ll}
+parser name&purpose\\
+\hline
+\texttt{texmessage.load}&loading of files (accept \texttt{(file ...)})\\
+\texttt{texmessage.loadfd}&loading of files (accept \texttt{(file.fd)})\\
+\texttt{texmessage.graphicsload}&loading of graphic files (accept \texttt{<file.eps>})\\
+\texttt{texmessage.ignore}&accept everything as a valid output\\
+\end{tabular}
+\medskip
+
+More specialised message parsers should become available as required.
+Please feal free to contribute (e.g. with ideas/problems; code is
+desired as well, of course). There are further message parsers for
+\PyX{}s internal use, but we skip them here as they are not
+interesting from the users point of view.
+
+\section{The defaulttexrunner instance}
+The \verb|defaulttexrunner| is an instance of the class
+\verb|texrunner|, which is automatically created by the \verb|text|
+module. Additionally, the methods \verb|text|, \verb|preamble|, and
+\verb|set| are available as module functions accessing the
+\verb|defaulttexrunner|. This single \verb|texrunner| instance is
+sufficient in most cases.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "manual.tex"
+%%% End:
