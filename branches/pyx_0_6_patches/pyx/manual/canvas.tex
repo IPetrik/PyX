@@ -1,0 +1,157 @@
+\section{Module \module{canvas}}
+\label{canvas}
+
+\sectionauthor{J\"org Lehmann}{joergl@users.sourceforge.net} 
+
+One of the central modules for the PostScript access in \PyX{} is
+named \verb|canvas|. Besides providing the class \verb|canvas|, which
+presents a collection of visual elements like paths, other canvases,
+\TeX{} or \LaTeX{} elements, it contains the class
+\texttt{canvas.clip} which allows clipping of the output.
+
+A canvas may also be embedded in another one using its \texttt{insert}
+method. This may be useful when you want to apply a transformation on
+a whole set of operations..
+
+\declaremodule{}{canvas}
+
+\subsection{Class \class{canvas}}
+
+This is the basic class of the canvas module, which serves to collect
+various graphical and text elements you want to write eventually to an
+(E)PS file.
+
+\begin{classdesc}{canvas}{attrs=[], texrunner=None}
+  Construct a new canvas, applying the given \var{attrs}, which can be
+  instances of \class{trafo.trafo}, \class{canvas.clip},
+  \class{style.strokestyle} or \class{stlye.fillstyle}.  The
+  \var{texrunner} argument can be used to specify the texrunner
+  instance used for the \method{text()} method of the canvas.  If not
+  specified, it defaults to \var{text.defaulttexrunner}.
+\end{classdesc}
+
+
+Paths can be drawn on the canvas using one of the following methods:
+
+\begin{methoddesc}{draw}{path, attrs}
+  Draws \var{path} on the canvas applying the given \var{attrs}.
+\end{methoddesc}
+
+\begin{methoddesc}{fill}{path, attrs=[]}
+  Fills the given \var{path} on the canvas applying the given
+  \var{attrs}. 
+\end{methoddesc}
+
+\begin{methoddesc}{stroke}{path, attrs=[]}
+  Strokes the given \var{path} on the canvas applying the given
+  \var{attrs}.
+\end{methoddesc}
+
+Arbitrary allowed elements like other \class{canvas} instances can
+be inserted in the canvas using
+
+\begin{methoddesc}{insert}{PSOp, attrs=[]}
+  Inserts an instance of \class{base.PSOp} into the canvas.  If
+  \var{attrs} are present, PSOp is inserted into a new
+  \class{canvas}instance with \var{attrs} as arguments passed to its
+  constructor is created. Then this \class{canvas} instance is
+  inserted itself into the canvas. Returns \var{PSOp}.
+\end{methoddesc}
+
+Text output on the canvas is possible using
+
+\begin{methoddesc}{text}{x, y, text, attrs=[]}
+  Inserts \var{text} at position (\var{x}, \var{y}) into the
+  canvas applying \var{attrs}. This is a shortcut for
+  \texttt{insert(texrunner.text(x, y, text, attrs))}).
+\end{methoddesc}
+
+The \class{canvas} class provides access to the total geometrical size
+of its element:
+
+\begin{methoddesc}{bbox}{}
+  Returns the bounding box enclosing all elements of the canvas.
+\end{methoddesc}
+
+A canvas also allows one to set global options:
+
+\begin{methoddesc}{set}{styles}
+  Sets the given \var{styles} (instances of \class{style.fillstyle} or
+  \class{style.strokestyle} or subclasses thereof).  for the rest of
+  the canvas.
+\end{methoddesc}
+
+\begin{methoddesc}{settexrunner}{texrunner}
+  Sets a new \var{texrunner} for the canvas.
+\end{methoddesc}
+
+The contents of the canvas can be written using:
+
+\begin{methoddesc}{writeEPSfile}{filename, paperformat=None,
+    rotated=0, fittosize=0, margin="1 t cm", bbox=None, bboxenlarge="1
+    t pt"} 
+  Writes the canvas to \var{filename} (the extension \texttt{.eps} is
+  appended automatically). Optionally, a \var{paperformat} can be
+  specified, in which case the output will be centered with respect to
+  the corresponding size using the given \var{margin}. See
+  \var{canvas.\_paperformats} for a list of known paper formats .  Use
+  \var{rotated}, if you want to center on a $90^\circ$ rotated version
+  of the respective paper format. If \var{fittosize} is set, the
+  output is additionally scaled to the maximal possible size.
+  Normally, the bounding box of the canvas is calculated automatically
+  from the bounding box of its elements.  Alternatively, you may
+  specify the \var{bbox} manually. In any case, the bounding box
+  becomes enlarged on all side by \var{bboxenlarge}. This may be used
+  to compensate for the inability of \PyX{} to take the linewidths
+  into account for the calculation of the bounding box.
+\end{methoddesc}
+
+\subsection{Patterns}
+
+The \class{pattern} class allows the definition of PostScript Tiling
+patterns (cf.\ Sect.~4.9 of the PostScript Language Reference Manual)
+which may then be used to fill paths. The classes \class{pattern} and
+\class{canvas} differ only in their constructor and in the absence of
+a \method{writeEPSfile()} method in the former. The \class{pattern}
+constructor accepts the following keyword arguments:
+
+\medskip
+\begin{tabularx}{\linewidth}{l>{\raggedright\arraybackslash}X}
+keyword&description\\
+\hline
+\texttt{painttype}&\texttt{1} (default) for coloured patterns or
+\texttt{2} for uncoloured patterns\\
+\texttt{tilingtype}&\texttt{1} (default) for constant spacing tilings
+(patterns are spaced constantly by a multiple of a device pixel),
+\texttt{2} for undistored pattern cell, whereby the spacing may vary
+by as much as one device pixel, or \texttt{3} for constant spacing and
+faster tiling which behaves as tiling type \texttt{1} but with
+additional distortion allowed to permit a more efficient
+implementation.\\
+\texttt{xstep}&desired horizontal spacing between pattern cells, use
+\texttt{None} (default) for automatic calculation from pattern
+bounding box.\\
+\texttt{ystep}&desired vertical spacing between pattern cells, use
+\texttt{None} (default) for automatic calculation from pattern
+bounding box.\\
+\texttt{bbox}&bounding box of pattern. Use \texttt{None} for an
+automatical determination of the bounding box (including an
+enlargement by $5$ pts on each side.)\\
+\texttt{trafo}&additional transformation applied to pattern or
+\texttt{None} (default). This may be used to rotate the pattern or to
+shift its phase (by a translation).
+\end{tabularx}
+\medskip
+
+After you have created a pattern instance, you define the pattern
+shape by drawing in it like in an ordinary canvas. To use the pattern,
+you simply pass the pattern instance to a \method{stroke()},
+\method{fill()}, \method{draw()} or \method{set()} method of the
+canvas, just like you would do with a colour, etc.
+
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "manual.tex"
+%%% End:
