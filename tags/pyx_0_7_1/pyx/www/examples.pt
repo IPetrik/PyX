@@ -1,0 +1,34 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+            "http://www.w3.org/TR/html4/strict.dtd">
+<html metal:use-macro="options/maintemplate/macros/page">
+
+  <div metal:fill-slot="body">
+
+    <h1>PyX - Examples</h1>
+
+    <p tal:condition="options/abstract" tal:content="options/abstract">
+      We might have a short abstract about the examples shown on this page.
+    </p>
+
+    <span class="example" tal:repeat="example options/examples" tal:omit-tag="">
+      <div class="exampleseparator" tal:condition="python: options['abstract'] or not repeat['example'].start()"></div>
+      <h2 tal:content="example/name">Name</h2>
+      <div class="exampleimage">
+        <a href="link" tal:attributes="href example/eps"><img tal:attributes="alt example/png; src example/png; width example/width; height example/height"></a>
+      </div>
+      <div class="examplecode" tal:content="structure example/code">Code</div>
+    </span>
+
+    <span tal:condition="python: options['pagename'] == 'examples/index.html'" tal:omit-tag="">
+      <div class="exampleseparator"></div>
+      <h2>Further examples</h2>
+      <p>
+        Further examples are available on separate pages:
+        <span tal:repeat="item options/examplepages" tal:omit-tag=""><a tal:attributes="href python:item+'/index.html'" tal:content="python: item.title()">Examples</a><span tal:omit-tag="" tal:condition="not: repeat/item/end">,</span></span>.
+      </p>
+    </span>
+
+  </div>
+
+</html>
+<!-- vim:set syntax=html: -->
