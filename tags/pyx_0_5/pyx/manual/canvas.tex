@@ -1,0 +1,245 @@
+\chapter{Module canvas: PostScript interface}
+\label{chap:canvas}
+
+\label{canvas}
+
+The central module for the PostScript access in \PyX{} is named
+\verb|canvas|. Besides providing the class \verb|canvas|, which
+presents a collection of visual elements like paths, other canvases,
+\TeX{} or \LaTeX{} elements, it contains also various path styles (as
+subclasses of \texttt{base.PathStyle}), path decorations like arrows
+(with the class \texttt{canvas.PathDeco} and subclasses thereof), and
+the class \texttt{canvas.clip} which allows clipping of the output.
+
+
+\section{Class canvas}
+
+This is the basic class of the canvas module, which serves to collect
+various graphical and text elements you want to write eventually to an 
+(E)PS file. 
+
+\subsection{Basic usage}
+
+Let us first demonstrate the basic usage of the \texttt{canvas} class.
+We start by constructing the main \verb|canvas| instance, which we
+shall by convention always name \verb|c|.
+\begin{quote}
+\begin{verbatim}
+from pyx import *
+
+c = canvas.canvas()
+\end{verbatim}
+\end{quote}
+Basic drawing then proceeds via the construction of a \verb|path|, which 
+can subsequently be drawn on the canvas using the method \verb|stroke()|:
+\begin{quote}
+\begin{verbatim}
+p = path.line(0, 0, 10, 10)
+c.stroke(p)
+\end{verbatim}
+\end{quote}
+or more concisely:
+\begin{quote}
+\begin{verbatim}
+c.stroke(path.line(0, 0, 10, 10))
+\end{verbatim}
+\end{quote}
+You can modify the appearance of a path by additionally passing 
+instances of the class \verb|PathStyle|. For instance, you can draw the 
+the above path \verb|p| in blue:
+\begin{quote}
+\begin{verbatim}
+c.stroke(p, [color.rgb.blue])
+\end{verbatim}
+\end{quote}
+Similarly, it is possible to draw a dashed version of \verb|p|:
+\begin{quote}
+\begin{verbatim}
+c.stroke(p, [style.linestyle.dashed])
+\end{verbatim}
+\end{quote}
+Combining of several \verb|PathStyle|s is of course also possible:
+\begin{quote}
+\begin{verbatim}
+c.stroke(p, [color.rgb.blue, style.linestyle.dashed])
+\end{verbatim}
+\end{quote}
+Furthermore, drawing an arrow at the begin or end of the path is done
+in a similar way. You just have to use the provided \verb|barrow| and 
+\verb|earrow| instances:
+\begin{quote}
+\begin{verbatim}
+c.stroke(p, [deco.barrow.normal, deco.earrow.large])
+\end{verbatim}
+\end{quote}
+
+Filling of a path is possible via the \verb|fill| method of the canvas.
+Let us for example draw a filled rectangle 
+\begin{quote}
+\begin{verbatim}
+r = path.rect(0, 0, 10, 5)
+c.fill(r)
+\end{verbatim}
+\end{quote}
+Alternatively, you can use the attribute \verb|filled| of the deco module
+in combination with the \verb|stroke| method:
+\begin{quote}
+\begin{verbatim}
+c.stroke(r, [deco.filled])
+\end{verbatim}
+\end{quote}
+
+To conclude the section on the drawing of paths, we consider a pretty
+sophisticated combination of the above presented \verb|PathStyle|s:
+\begin{quote}
+\begin{verbatim}
+c.stroke(p,
+         [color.rgb.blue,
+          deco.earrow.LARge([color.rgb.red,
+                             deco.stroked([style.linejoin.round]),
+                             deco.filled([color.rgb.green])])])
+\end{verbatim}
+\end{quote}
+This draws the path in blue with a pretty large green arrow at the
+end, the outline of which is red and rounded.
+
+A canvas may also be embedded in another one using the \texttt{insert}
+method. This may be useful when you want to apply a transformation on
+a whole set of operations. XXX: Example
+
+After you have finished the composition of the canvas, you can
+write it to a file using the method \verb|writetofile()|. It expects the
+required argument \verb|filename|, the name of the output
+file. To write your results to the file "test.eps" just call it as follows:
+\begin{quote}
+\begin{verbatim}
+c.writetofile("test")
+\end{verbatim}
+\end{quote}
+
+
+\subsection{Methods of the class canvas}
+
+The \verb|canvas| class provides the following methods:
+
+\medskip
+\begin{tabularx}
+  {\linewidth}
+  {>{\hsize=.85\hsize}X>{\raggedright\arraybackslash\hsize=1.15\hsize}X}
+  \texttt{canvas} method & function \\
+  \hline
+  \texttt{\_\_init\_\_(*args)} & Construct new canvas. \texttt{args}
+  can be instances of \texttt{trafo.trafo}, \texttt{canvas.clip}
+  and/or \texttt{canvas.PathStyle}.\\
+  \texttt{bbox()} &
+  Returns the bounding box enclosing all elements of the canvas.\\
+  \texttt{draw(path, attrs)} &
+  Generic drawing routine for given \texttt{path} on the canvas (\textit{i.e.}\
+  \texttt{insert}s it together with the necessary \texttt{newpath}
+  command, applying the given \texttt{attrs}. \\
+  \texttt{fill(path, attrs=[])} &
+  Fills the given \texttt{path} on the canvas, \textit{i.e.}\
+  \texttt{insert}s it together with the necessary \texttt{newpath},
+  \texttt{fill} sequence, applying the given \texttt{attrs}. \\
+  \texttt{insert(PSOp, *args)} &
+  Inserts an instance of \texttt{base.PSOp} into the canvas.
+  If \texttt{args} are present, create a new \texttt{canvas}instance passing
+  \texttt{args} as arguments and insert it. Returns \texttt{PSOp}.\\
+  \texttt{set(*styles)} &
+  Sets the given \texttt{styles} (instances of \texttt{base.PathStyle} or
+  subclasses) for the rest of the canvas.\\
+  \texttt{stroke(path, attrs=[])} & 
+  Strokes the given \texttt{path} on the canvas, \textit{i.e.}\
+  \texttt{insert}s it togeither with the necessary \texttt{newpath},
+  \texttt{stroke} sequence, applying the given \texttt{attrs}. \\
+  \texttt{text(x, y, text, *args)} &
+  Inserts \texttt{text} into the
+  canvas (shortcut for
+  \texttt{insert(texrunner.text(x, y, text, *args))}).\\
+  \texttt{texrunner(texrunner)} &
+  Sets the \texttt{texrunner}; default is \texttt{defaulttexrunner}
+  from the \texttt{text} module.\\
+    \texttt{writetofile(filename, 
+      \newline\phantom{writetofile(}paperformat=None, 
+      \newline\phantom{writetofile(}rotated=0,
+      \newline\phantom{writetofile(}fittosize=0, 
+      \newline\phantom{writetofile(}margin="1 t cm",
+      \newline\phantom{writetofile(}bbox=None,
+      \newline\phantom{writetofile(}bboxenlarge="1 t pt")} &
+  Writes the canvas to \texttt{filename}. Optionally, a
+  \texttt{paperformat} can be specified, in which case the output will
+  be centered with respect to the corresponding size using the given
+  \texttt{margin}. See \texttt{canvas.\_paperformats} for a list of
+  known paper formats . Use \texttt{rotated}, if you want to center on
+  a $90^\circ$ rotated version of the respective paper format. If
+  \texttt{fittosize} is set, the output is additionally scaled to the
+  maximal possible size. Normally, the bounding box of the canvas is 
+  calculated automatically from the bounding box of its elements.
+  Alternatively, you may specify the \texttt{bbox} manually. In any
+  case, the bounding box becomes enlarged on all side by
+  \texttt{bboxenlarge}. This may be used to compensate for the
+  inability of \PyX{} to take the linewidths into account for the
+  calculation of the bounding box.
+\end{tabularx} 
+\medskip
+
+\section{Patterns}
+
+The \texttt{pattern} class allows the definition of PostScript Tiling
+patterns (cf.\ Sect.~4.9 of the PostScript Language Reference Manual)
+which may then be used to fill paths. The classes \texttt{pattern} and
+\texttt{canvas} differ only in their constructor and in the absence of
+a \texttt{writetofile} method in the former. The \texttt{pattern}
+constructor accepts the following keyword arguments:
+
+\medskip
+\begin{tabularx}{\linewidth}{l>{\raggedright\arraybackslash}X}
+keyword&description\\
+\hline
+\texttt{painttype}&\texttt{1} (default) for coloured patterns or
+\texttt{2} for uncoloured patterns\\
+\texttt{tilingtype}&\texttt{1} (default) for constant spacing tilings
+(patterns are spaced constantly by a multiple of a device pixel),
+\texttt{2} for undistored pattern cell, whereby the spacing may vary
+by as much as one device pixel, or \texttt{3} for constant spacing and
+faster tiling which behaves as tiling type \texttt{1} but with
+additional distortion allowed to permit a more efficient
+implementation.\\
+\texttt{xstep}&desired horizontal spacing between pattern cells, use
+\texttt{None} (default) for automatic calculation from pattern
+bounding box.\\
+\texttt{ystep}&desired vertical spacing between pattern cells, use
+\texttt{None} (default) for automatic calculation from pattern
+bounding box.\\
+\texttt{bbox}&bounding box of pattern. Use \texttt{None} for an
+automatical determination of the bounding box (including an
+enlargement by $5$ pts on each side.)\\
+\texttt{trafo}&additional transformation applied to pattern or
+\texttt{None} (default). This may be used to rotate the pattern or to
+shift its phase (by a translation).
+\end{tabularx}
+\medskip
+
+After you have created a pattern instance, you define the pattern
+shape by drawing in it like in an ordinary canvas. To use the pattern,
+you simply pass the pattern instance to a \texttt{stroke},
+\texttt{fill}, \texttt{draw} or \texttt{set} method of the canvas,
+just like you would to with a colour, etc.
+
+
+
+\section{Subclasses of base.PathStyle}
+
+The \verb|canvas| module provides a number of subclasses of the class
+\verb|base.PathStyle|, which allow to change the look of the paths
+drawn on the canvas. They are summarized in Appendix~\ref{pathstyles}.
+
+% \section{Examples}
+
+
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "manual.tex"
+%%% End:

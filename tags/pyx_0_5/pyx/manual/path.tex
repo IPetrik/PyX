@@ -1,0 +1,212 @@
+\chapter{Module path: PostScript like paths}
+
+\label{path}
+
+With the help of the path module it is possible to construct PostScript like 
+paths, which are one of the main building blocks for the generation of 
+drawings. To that end it provides 
+\begin{itemize}
+\item classes (derived from \verb|pathel|) for the primitives \verb|moveto|, \verb|lineto|, etc.
+\item the class \verb|path| (and derivatives thereof) representing an
+  entire PostScript path
+\item the class \verb|normpath| (and derivatives thereof) which is a
+  path consisting only of a certain subset of \verb|pathel|s, namely
+  the four \verb|normpathel|s \verb|moveto|, \verb|lineto|,
+  \verb|curveto| and \verb|closepath|.
+\end{itemize}
+
+\section{Class pathel}
+
+The class \verb|pathel| is the superclass of all PostScript path
+construction primitives. It is never used directly, but only by
+instantiating its subclasses, which correspond one by one to the
+PostScript primitives.
+
+\medskip
+\begin{tabularx}{\linewidth}{>{\hsize=.7\hsize}X>{\raggedright\arraybackslash\hsize=1.3\hsize}X}
+Subclass of \texttt{pathel} & function \\
+\hline
+\texttt{closepath()} & closes current subpath \\
+\texttt{moveto(x, y)} & sets current point to (\texttt{x},
+\texttt{y})\\
+\texttt{rmoveto(dx, dy)} & moves current point by (\texttt{dx},
+\texttt{dy})\\
+\texttt{lineto(x, y)} & moves current point to (\texttt{x}, \texttt{y})
+while drawing a straight line\\
+\texttt{rlineto(dx, dy)} & moves current point by by (\texttt{dx}, \texttt{dy})
+while drawing a straight line\\
+\texttt{arc(x, y, r, \newline\phantom{arc(}angle1, angle2)} & appends arc segment in
+counterclockwise direction with center (\texttt{x}, \texttt{y}) and
+radius~\texttt{r} from \texttt{angle1} to \texttt{angle2} (in degrees).\\
+\texttt{arcn(x, y, r, \newline\phantom{arcn(}angle1, angle2)} & appends arc segment in
+clockwise direction with center (\texttt{x}, \texttt{y}) and
+radius~\texttt{r} from \texttt{angle1} to \texttt{angle2} (in degrees). \\
+\texttt{arct(x1, y1, x2, y2, r)} & appends arc segment of radius \texttt{r}
+connecting between (\texttt{x1}, \texttt{y1}) and (\texttt{x2}, \texttt{y2}).\\
+\texttt{rcurveto(dx1, dy1, \newline\phantom{rcurveto(}dx2, dy2,\newline\phantom{rcurveto(}dx3, dy3)} & appends a B\'ezier curve with
+the following four control points: current point and the points defined 
+relative to the current point by (\texttt{dx1}, \texttt{dy1}), 
+(\texttt{dx2}, \texttt{dy2}), and (\texttt{dx3}, \texttt{dy3})
+\end{tabularx}
+\medskip
+
+Some notes on the above:
+\begin{itemize}
+\item All coordinates are in \PyX\ lengths
+\item If the current point is defined before an \verb|arc| or
+  \verb|arcn| command, a straight line from current point to the
+  beginning of the arc is prepended.
+\item The bounding box (see below) of B\'ezier curves is actually 
+  the box enclosing the control points, \textit{i.e.}\ not neccesarily the 
+  smallest rectangle enclosing the B\'ezier curve.
+\end{itemize}
+
+
+\section{Class path}
+
+The class path represents PostScript like paths in \PyX. The \verb|path| 
+constructor allows the creation of such a path out of a series of 
+\verb|pathel|s. The following simple example generates a triangle:
+looks like:
+\begin{quote}
+\begin{verbatim}
+from pyx import *
+from pyx.path import *
+
+p = path(moveto(0, 0), 
+         lineto(0, 1),
+         lineto(1, 1),
+         closepath())
+\end{verbatim}
+\end{quote}
+In section~\ref{chap:canvas}, we shall see, how it is possible to output such 
+a path on a canvas. For the moment, we only want to discuss the methods 
+provided by the \verb|path| class. These range from standard operations like 
+the determination of the length of a path via \verb|len(p)|, fetching of
+items using \verb|p[index]| and the possibility to concatenate two
+paths, \verb|p1 + p2|, append further \verb|pathel|s using
+\verb|p.append(pathel)| to more advanced methods, which are summarized
+in the following table.
+
+XXX terminology: subpath, \dots
+
+\medskip
+\begin{tabularx}{\linewidth}{>{\hsize=.7\hsize}X>{\raggedright\arraybackslash\hsize=1.3\hsize}X}
+  \texttt{path} method & function \\
+  \hline \texttt{\_\_init\_\_(*pathels)} & construct new \texttt{path}
+  consisting of \texttt{pathels}\\
+  \texttt{append(pathel)} & appends \texttt{pathel} to the end of 
+  \texttt{path}\\
+  \texttt{arclength(epsilon=1e-5)} & returns the total arc length of
+  all \texttt{path} segments in PostScript points with accuracy
+  \texttt{epsilon}.$^\dagger$\\
+  \texttt{at(t)} & returns the coordinates of the point of
+  \texttt{path} corresponding to the parameter value
+  \texttt{t}.$^\dagger$\\
+  \texttt{lentopar(l, \newline\phantom{lentopar(}epsilon=1e-5)} & returns the
+  parameter value corresponding to the lengths \texttt{l} (one or a list of
+  lengths). This uses arclength-calculations with accuracy
+  \texttt{epsilon}.$^\dagger$\\
+  \texttt{bbox()} & returns the bounding box of the \texttt{path}\\
+  \texttt{begin()} & return first point of first subpath of
+  \texttt{path}.$^\dagger$\\
+  \texttt{end()} & return last point of last subpath of
+  \texttt{path}.$^\dagger$\\
+  \texttt{glue(opath)} & returns the \texttt{path} glued together with
+  \texttt{opath}, \textit{i.e.}\ the last subpath of \texttt{path}
+  and the first one of \texttt{opath} are joined.$^\dagger$\\
+  \texttt{intersect(opath, \newline\phantom{intersect(}epsilon=1e-5)}
+  & returns tuple consisting of two lists of parameter values
+  corresponding to the
+  intersection points of \texttt{path} and \texttt{opath}, respectively.$^\dagger$\\
+  \texttt{reversed()} & returns the normalized reversed
+  \texttt{path}.$^\dagger$\\
+  \texttt{split(parameters)} & splits the path at the given list of
+  parameters (which have to be sorted in ascending order) and returns
+  a corresponding list of 
+  \texttt{normpath}s.$^\dagger$\\
+    \texttt{tangent(t, length=None)} & return the tangent (as \texttt{normpath}) to
+    the path at the 
+    parameter value \texttt{t}.  Negative values of \texttt{t} count
+    from the end of the path. The absolute value of \texttt{t} must be
+    smaller or equal to the number of segments in the normpath,
+    otherwise None is returned.  At discontinuities in the path, the
+    limit from below is returned. If \texttt{length} is not
+  \texttt{None}, the tangent vector will be scaled correspondingly.
+  \\
+  \texttt{transformed(trafo)} & returns the normalized and accordingly
+  to the linear transformation \texttt{trafo} transformed path. Here,
+  \texttt{trafo} must be an instance of the \texttt{trafo.trafo}
+  class.$^\dagger$
+\end{tabularx} 
+\medskip
+
+Some notes on the above:
+\begin{itemize}
+\item The bounding box may be too large, if the path contains any
+  \texttt{curveto} elements, since for these the control box,
+  \textit{i.e.}, the bounding box enclosing the control points of
+  the B\'ezier curve is returned.
+\item The $\dagger$ denotes methods which require a prior
+  conversion of the path into a \verb|normpath| instance. This is
+  done automatically, but if you need to call such methods often,
+  it is a good idea to do the conversion once for performance reasons.
+\item Instead of using the \verb|glue| method, you can also glue two
+paths together with help of the \verb|<<| operator, for instance
+\verb|p = p1 << p2|.
+\end{itemize}
+
+\section{Class normpath}
+
+The \texttt{normpath} class represents a specialized form of a
+\texttt{path} containing only the elements \verb|moveto|,
+\verb|lineto|, \verb|curveto| and \verb|closepath|. Such normalized
+paths are used during all of the more sophisticated path operations
+which are denoted by a $\dagger$ in the above table.
+
+
+Any path can
+easily be converted to its normalized form by passing it as parameter
+to the \texttt{normpath} constructor,
+\begin{quote}
+\begin{verbatim}
+np = normpath(p)
+\end{verbatim}
+\end{quote}
+Alternatively, by passing a series of \texttt{pathel}s to the constructor, a
+\texttt{normpath} can be constructed like a generic \texttt{path}.
+The sum of a \verb|normpath| and a \verb|path| always yields a
+\verb|normpath|.
+
+\section{Subclasses of path}
+
+For your convenience, some special PostScript paths are already defined, which
+are given in the following table.
+
+\medskip
+\begin{tabularx}{\linewidth}{l>{\raggedright\arraybackslash}X}
+Subclass of \texttt{path} & function \\
+\hline
+\texttt{line(x1, y1, x2, y2)} & a line from the point
+  (\texttt{x1}, \texttt{y1}) to the point (\texttt{x2}, \texttt{y2})\\
+\texttt{curve(x0, y0, x1, y1, x2, y2, x3, y3)} & a B\'ezier curve with 
+control points  (\texttt{x0}, \texttt{y0}), $\dots$, (\texttt{x3}, \texttt{y3}).\\
+\texttt{rect(x, y, w, h)} &  a rectangle with the
+  lower left point (\texttt{x}, \texttt{y}), width~\texttt{w}, and
+  height~\texttt{h}. \\
+\texttt{circle(x, y, r)} & a circle with 
+  center (\texttt{x}, \texttt{y}) and radius~\texttt{r}.
+\end{tabularx}
+\medskip
+Note that besides the \verb|circle| class all classes are actually
+subclasses of \verb|normpath|.
+
+
+% \section{Examples}
+
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "manual.tex"
+%%% End:

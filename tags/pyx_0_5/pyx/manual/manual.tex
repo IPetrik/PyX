@@ -1,0 +1,43 @@
+\documentclass[dvips]{scrreprt}
+\usepackage{pyx,tabularx,graphicx}
+\usepackage[latin1]{inputenc}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{units}
+\hypersetup{
+   pdftitle={PyX Reference Manual},
+   pdfauthor={Jörg Lehmann, André Wobst},
+   colorlinks={true}
+}
+% \includeonly{graph} % for temporarily skipping of chapters
+\setlength{\parindent}{0pt}
+\begin{document}
+\subject{\href{http://pyx.sourceforge.net/}{\url{http://pyx.sourceforge.net/}}}
+\title{\PyX{} \input pyxversion.tex\\
+Reference Manual}
+\author{J\"org Lehmann \href{mailto:joergl@users.sourceforge.net}{\url{<joergl@users.sourceforge.net>}}\and
+Andr\'e Wobst \href{mailto:wobsta@users.sourceforge.net}{\url{<wobsta@users.sourceforge.net>}}}
+\maketitle
+\quad\vfill\centerline{PostScript is a trademark of Adobe Systems Incorporated.}
+\tableofcontents
+\include{intro}
+\include{unit}
+\include{path}
+\include{trafo}
+\include{canvas}
+\include{text}
+\include{box}
+\include{connector}
+\include{epsfile}
+\include{bbox}
+\include{color}
+\include{data}
+\include{graph}
+\include{tex}
+\appendix
+\include{mathtree}
+\include{colorname}
+\include{palettename}
+\include{pathstyles}
+\include{arrows}
+\end{document}
