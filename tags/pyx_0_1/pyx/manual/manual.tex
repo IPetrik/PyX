@@ -1,0 +1,28 @@
+\documentclass{scrreprt}
+\usepackage{pyx,tabularx,graphicx}
+%\includeonly{graph} % for temporarily skipping of chapters
+\setlength{\parindent}{0pt}
+\begin{document}
+\subject{\texttt{http://pyx.sourceforge.net/}}
+\title{\PyX{} 0.1\\User Manual}
+\author{J\"org Lehmann \texttt{<joergl@users.sourceforge.net>}\and
+Andr\'e Wobst \texttt{<wobsta@users.sourceforge.net>}}
+\maketitle
+\quad\vfill\centerline{PostScript is a trademark of Adobe Systems Incorporated.}
+\tableofcontents
+\include{intro}
+\include{unit}
+\include{path}
+\include{trafo} 
+\include{canvas}
+\include{epsfile}
+\include{tex}
+\include{color}
+\include{datafile}
+\include{graph}
+\appendix
+\include{mathtree}
+\include{colorname}
+\include{gradientname}
+\include{pathstyles}
+\end{document}
