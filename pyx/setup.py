@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
 from distutils.core import setup
-import pyx
 
 setup(name="PyX",
-      version=pyx.__version__,
+      version="0.1",
       author="Jörg Lehmann, André Wobst",
       author_email="pyx-devel@lists.sourceforge.net",
       url="http://pyx.sourceforge.net/",
