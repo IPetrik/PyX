@@ -1,0 +1,135 @@
+\chapter{Module unit}
+\label{unit}
+
+With the \verb|unit| module \PyX{} makes available classes and
+functions for the specification and manipulation of lengths. As usual,
+lengths consist of a number together with a measurement unit,
+\textit{e.g.}\ \unit[1]{cm}, \unit[50]{points}, \unit[0.42]{inch}.  In 
+addition, lengths in \PyX{} are composed of the four types ``true'', 
+``user'', ``visual'' and ``width'', \textit{e.g.}\ \unit[1]{user cm}, 
+\unit[50]{true points}, $(0.42\ \mathrm{visual} + 0.2\ \mathrm{width})$ inch.  
+As their names indicate, they serve different purposes. True lengths are not
+scalable and serve mainly for return values of \PyX{} functions.  The
+other length types allow a rescaling by the user and differ with
+respect to the type of object they are applied to:
+
+\begin{description}
+\item[user length:] used for lengths of graphical objects like
+  positions etc.
+\item[visual length:] used for sizes of visual elements, like arrows,
+  graph symbols, axis ticks, etc.
+\item[width length:] used for line widths
+\end{description}
+
+For instance, if you only want thicker lines for a publication
+version of your figure, you can just rescale the width lengths. How
+this all works, is described in the following sections.
+
+\section{Class length}
+
+The constructor of the \verb|length| class accepts as first argument
+either a number or a string:
+\begin{itemize}
+\item \verb|length(number)| means a user length in units of the default
+unit, defined via \verb|unit.set(defaultunit=defaultunit)|.
+\item For \verb|length(string)|, the \verb|string| has to consist of a
+  maximum of three parts separated by one or more whitespaces:
+\begin{description}
+\item[quantifier:] integer/float value. Optional, defaults to \verb|1|.
+\item[type:] \verb|"t"| (true), \verb|"u"| (user), \verb|"v"| (visual), or \verb|"w"| (width).
+  Optional, defaults to \verb|"u"|.
+\item[unit:] \verb|"m"|, \verb|"cm"|, \verb|"mm"|, \verb|"inch"|, or
+  \verb|"pt"|. Optional, defaults to the default unit.
+\end{description}
+\end{itemize}
+The default for the first argument is chosen in such a way that
+\texttt{5*length()==length(5)}.  Note that the default unit  is
+initially set to \verb|"cm"|, but can be changed at any time by the
+user. For instance, use
+\begin{quote}
+\begin{verbatim}
+unit.set(defaultunit="inch")
+\end{verbatim}
+\end{quote}
+if you want to specify per default every length in inches.
+Furthermore, the scaling of the user, visual and width types can be
+changed with the \verb|set| function, as well. To this end, \verb|set|
+accepts the named arguments \verb|uscale|, \verb|vscale|, and
+\verb|wscale|. For example, if you like to change the thickness of all
+lines (with predefined linewidths) by a factor of two, just insert
+\begin{quote}
+\begin{verbatim}
+unit.set(wscale = 2)
+\end{verbatim}
+\end{quote}
+at the beginning of your program.
+
+To complete the discussion of the \verb|length| class, we mention,
+that as expected \PyX{} lengths can be added, subtracted, multiplied by
+a numerical factor and converted to a string.
+
+\section{Subclasses of length}
+
+A number of subclasses of \verb|length| are already predefined.  They
+only differ in their defaults for \verb|type| and \verb|unit|. Note
+that again the default value for the quantifier is \verb|1|, such
+that, for instance, \texttt{5*m(1)==m(5)}.
+
+\medskip
+\begin{center}
+\begin{tabular}{lll|lll}
+Subclass of \texttt{length} & Type & Unit & Subclass of \texttt{length} & Type & Unit\\
+\hline
+\texttt{m(x)} & user & m & \texttt{v\_m(x)} & visual & m\\
+\texttt{cm(x)} & user & cm & \texttt{v\_cm(x)} & visual & cm\\
+\texttt{mm(x)} & user & mm & \texttt{v\_mm(x)} & visual & mm\\
+\texttt{inch(x)} & user & inch & \texttt{v\_inch(x)} & visual & inch\\
+\texttt{pt(x)} & user & points & \texttt{v\_pt(x)} & visual & points\\
+\texttt{t\_m(x)} & true & m & \texttt{w\_m(x)} & width & m\\
+\texttt{t\_cm(x)} & true & cm & \texttt{w\_cm(x)} & width & cm\\
+\texttt{t\_mm(x)} & true & mm & \texttt{w\_mm(x)} & width & mm\\
+\texttt{t\_inch(x)} & true & inch & \texttt{w\_inch(x)} & width & inch\\
+\texttt{t\_pt(x)} & true & points & \texttt{w\_pt(x)} & width & points\\
+\texttt{u\_m(x)} & user & m & \\
+\texttt{u\_cm(x)} & user & cm & \\
+\texttt{u\_mm(x)} & user & mm & \\
+\texttt{u\_inch(x)} & user & inch & \\
+\texttt{u\_pt(x)} & user & points & \\
+
+\end{tabular}
+\end{center}
+\medskip
+Here, \verb|x| is either a number or a string, which, as mentioned
+above, defaults to \texttt{1}.
+
+\section{Conversion functions}
+If you want to know the value of a \PyX{} length in certain units, you
+may use the predefined conversion functions which are given in the
+following table
+\begin{center}
+\begin{tabular}{ll}
+function & result \\
+\hline
+\texttt{to\_m(l)} & \texttt{l} in units of m\\
+\texttt{to\_cm(l)} & \texttt{l} in units of cm\\
+\texttt{to\_mm(l)} & \texttt{l} in units of mm\\
+\texttt{to\_inch(l)} & \texttt{l} in units of inch\\
+\texttt{to\_pt(l)} & \texttt{l} in units of points\\
+\end{tabular}
+\end{center}
+If \verb|l| is not yet a \verb|length| instance, it is converted first
+into one, as described above. You can also specify a tuple, if you
+want to convert multiple lengths at once.
+
+
+%\section{Examples}
+
+
+%\subsection{Example 1}
+
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "manual.tex"
+%%% End:

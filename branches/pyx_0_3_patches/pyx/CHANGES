@@ -1,0 +1,124 @@
+PyX
+
+0.4 (????/??/??):
+  TODOs:
+  - graph module:
+      - common bboxes for different graphs
+      - automatic datafile key title
+      - exceptions in drawsymbol & friends...
+      - separate texter out of the axispainter
+      - 3d graphs
+  - canvas module:
+      - default patterns
+      - stroke and fill should support trafos
+
+0.3 (2003/03/31)
+  - examples
+    - new easy to use example generation (will hopefully lead to nice examples)
+  - unit box:
+    - new module for handling of convex polygons (taken out of the graph module)
+  - unit helper:
+    - new module containing a collection of helper functions (taken out of the graph module)
+    - moved the attrlist into helper -- as plain functions; attrlist becomes obsolete
+  - text module:
+    - new module: a new and preferable integration of TeX/LaTeX
+  - t1strip module:
+    - strip glyphs from pfa/pfb-fonts
+    - there is a C implementation taken from pdftex
+    - fallback solution via an external program (pfb2pfa)
+  - pykpathsea module:
+    - (partial) C binding to libkpathsea
+    - fallback solution via an external program (kpsewhich)
+  - graph module:
+    - removed some code duplication (various axis painters)
+    - use text module instead of the obsolete tex module
+    - allow for tailing zeros of automatic generated labels
+    - allow for missing data in bar graphs -> skipmissing parameter
+    - remove the support for variables given as keyword arguments in data constructor
+    - use context instead of extern for extern variables and functions
+    - graph keys; titles in data/function/etc.
+  - unit module:
+    - new classes for visual and width lengths, aliases for user length (u_pt = pt)
+    - all length classes have now by default a quantifier 1 (instead of 0), such that,
+      for instance, 5*unit.t_cm() == unit.t_cm(5)
+    - default_unit now has to be set via unit.set. For instance: unit.set(defaultunit="m").
+    - convert_to is now an internal function, which moreover does not longer accept tuples or lists
+  - bbox module:
+    - new class _bbox (the former bbox) which accepts points in the constructor. This is used
+      for internal purposes.
+    - the bbox constructor now accepts user lengths in the constructor.
+    - new methods height, width, top, bottom, left, right
+    - ll & ur ???, what about ul and lr -> ugly!
+    - enlarge (was enhance) now allows selective enlargement to the left, bottom, right and top
+    - output HiResBoundingBox
+    - never reduce bbox upon output
+    - defered TODOs:
+      __iadd__ and inplace enlarge, transform,...
+  - epsfile module:
+    - new constructor signature, more in line with rest of PyX:
+      epsfile(x, y, filename, **additional_args)
+  - data module:
+    - removed additional column support in addcolumn; removed _addcolumn
+    - line reduction for datafile like the every parameter in gnuplot
+  - canvas module:
+    - new way of PS prolog generation that writes only necessary parts
+    - added support for patterns
+    - canvas.insert() now supports arguments
+    - bbox of canvas can be specified in writetofile command explicitely
+    - writetofile does not return self anymore
+    - arrow template now uses intersection with circle to get size right
+      (as per a suggestion by Michael Schindler)
+  - mathtree module:
+    - added abs function
+    - changed the handling of extern functions and all variables
+  - color module:
+    - gradient renamed to palette
+  - numerous bugfixes:
+    - problem with sizefile on windows (tex module)
+    - allow for strings in graphxy's width and height; allow for width only (graph module)
+    - disable rating for labelattrs equals None (graph module)
+    - defaultstyle selection, when a list of data is provided to the plot function (graph module)
+    - traverse when adding functions as arguments of operators (mathtree module)
+    - allow for extern functions in addcolumn (data module)
+    - just one common place for the version number
+    - fix incorrect exception name MathError (path module)
+    - prevent double return of intersections for closed sub paths
+    - ...
+
+0.2 (2003/01/17):
+  - unit module:
+    - allow division of length by numbers
+  - trafo module:
+    - new transformation: slant
+    - renamed all trafo methods to use the participle (i.e translate->translated)
+    - the name of all trafo subclasses are verbs (i.e. translation->translate)
+  - graph module:
+    - mark class renamed to symbol
+    - (text-)box distance measurement
+    - moved axis partitioning to axis and axis painter
+    - automatic axis partitioning (now officially: general cleanup, distance measurement, documentation)
+    - splitaxis
+    - baraxis, baraxispainter, and bar style
+  - data module:
+    - previously named datafile module
+    - class "_datafile" renamed to class "data"
+    - class sectionfile added
+    - testsuite
+  - mathtree module:
+    - extern variables and functions (support in graph.function, graph.paramfunction and data.data)
+    - testsuite
+  - text module:
+    - deferred to Version 0.3
+    - running TeX "on the fly" is basically implemented
+  - numerous bugfixes:
+    - transformation bug (#624068, trafo module)
+    - canvas transformations (canvas module???)
+    - textbox alignment (graph module)
+    - return linewidth upon calculation with linewidths (unit module)
+    - allow column number variables with several digits
+    - ...
+  - british and american spellings (color module, graph module)
+  - small logo modifications
+
+0.1 (2002/10/07):
+  - initial release
