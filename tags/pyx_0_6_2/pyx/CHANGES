@@ -1,0 +1,450 @@
+PyX
+
+TODO:
+  - graph module
+    - common bboxes for different graphs
+    - exceptions in drawsymbol & friends...
+    - 3d graphs, circular graphs
+  - style module:
+    - default patterns
+    - make dash length available
+  - text module:
+    - SlantFont & Co support
+    - keep an eye on PEP 324 (popen 5): it could make the texrunner much easier
+    - messageparser for replaced fontsizes: Warning
+    - messageparser for size differences at the end: Warning not Exception
+    - messageparser for overfull/underfull vbox/hbox: Warning not Exception
+    - newline removal when not disturbing texmessages only
+  - graph.data module:
+    - use csv module (new in 2.3)
+    - Check for "inf" and "nan" in datafiles.
+      (When plotted, the graph does not complain, but the postscript will be broken)
+  - canvas module:
+    - multi page PostScript output
+    - contructor should only take a texrunner keyword argument
+    - set method???
+    - PDF support
+    - SVG support
+  - style and color module:
+    - support modification of existing styles via __call__
+  - bbox module:
+    - height -> getheight, ...
+  - attr module:
+    - TODO: general documentation about attributes, clearing, merging?
+    - TODO: general documentation about changeable attributes?
+  - unit module:
+    - what about unit.cm() -> unit.cm, ...
+    - maybe we should never convert implicitly into visual/width, etc. lengths
+    - check that we always return the appropriate length, i.e., not
+      too often true
+  - mathtree:
+    - might be moved into the graph
+    - perform calc by means of Python itself (see eval code in graph.data, but
+      we should use compiled code instead of eval)
+  - deco module:
+    - think hard about different paths in decoratedpath class
+    - adjust parameters of cycloid and smoothed
+      AW suggests to use cycloid with default curvesperloop=5.
+  - dvifile module:
+    - support single-character mode
+  - path module:
+    - arclentoparam should raise an exception when the arclen is out of range
+    - use _pt for variable names 
+
+  Documentation:
+    - path module:
+      - describe + vs <<
+      - more details in path constructor: allowed pathels, first pathel...
+    - deco module:
+      - cycloid decorator
+      - smoothed decorator
+    - graphics section:
+      Attributes and changeable attributes should be explained in a
+      central place.
+    - section titles: "Axes" -> "Axes - module axis" or similar
+
+  FAQ:
+    - describe creation and modification (inplace and ``modify by new'') of
+      graph data
+
+
+0.6.2 (2004/04/07):
+  - graph module:
+    - fixed title=None + graph key issue reported by Gabriel Vasseur
+    - graph.axis.painter.plain -> graph.axis.painter.regular
+      (as it was in parts of the documentation already)
+    - changeable-gridattrs-become-None-bug fixed
+    - graph style cutting outside lines (double-)fixed
+
+
+0.6.1 (2004/03/31):
+  - fixes missing install of the graph and axis directories introduced in 0.6
+  - some minor updates to the faq
+
+
+0.6 (2004/03/30):
+  - graph module:
+    - reorganisation of the graph structure finished (there might be some
+      small pending issues, but the basic restructuring is done with this release):
+      - graph splitted into several modules in pyx/graph and pyx/graph/axis
+      - painters are using the new attribute scheme including changeable
+        attributes
+      - graph styles rewrite
+      - graph data rewrite
+    - axis zeropath feature has been removed
+    - mergelabels removed; linpart doesn't have a label argument anymore
+    - names and texts removed from baraxis
+    - iteration on graph style, when it is used several times in the same graph
+    - symbols + lines -> symbollines; symbols do not allow setting lineattrs,
+      and lines not symbolattrs
+    - manual line clipping (do not include unneeded line segments when the
+      axis range is set manually etc.)
+    - automatic file key titles
+    - graph.data now also includes the old data module
+    - data.list adds (by default) a line number like data.file
+      (thus regular columns are counted from 1)
+  - path:
+    - added new pathels multilineto_pt and multicurveto which allows to specify
+      a list of points and can thus be much more efficient
+    - internal methods return coordinates in pts
+    - arclentoparam returns only parameters not total length
+    - added path.arclength_pt, path.at_pt, path.begin_pt, path.end_pt (and
+      correspondingly for normpath)
+    - complete refactoring of the normpath class: normpaths now consist of
+      normsubpaths which themselves consist of normlines and normcurves This is
+      much more convenient for any routines working with normpaths.
+    - reversing of closed sub paths does not change the first point of the sub
+      path
+    - renamed: arclength -> arclen
+    - renamed: lentopar -> arclentoparam
+    - renamed: glue -> joined
+    - normpath now supports join, the in-place version of joined
+    - path and normpath method raise exception instead of returning None
+      when parameter is out of range
+    - the accuracy epsilon can now only be specified in normpath and normsubpath
+      constructor and no longer in arguments of path and normpath methods
+    - negative parameters are no longer supported in path and normpath methods
+    - path and normpath methods which accept parameter value param now
+      alternatively accept an arc length
+  - deco module:
+    - cycloid decorator
+    - smoothed decorator
+    - arrow heads are no longer stroked (as suggested by Magnus Lie Hetland)
+  - canvas:
+    - writeEPSfile deprecates writetofile
+    - internally, write methods are renamed in outputPS
+    - canvas constructor no longer accepts variable argument list but
+      expects a list of attrs as first argument (defaulting to []) and
+      a texrunner as second argument (defaulting to text.defaulttexrunner)
+    - set, draw, stroke and fill no longer return self, i.e., the canvas, but None
+  - bbox module:
+     - added inplace add (__iadd__), enlarge and transform methods
+     - callers use inplace add where possible now (yielding a considerable
+       speedup)
+    - "undefined" corners of bounding boxes are no longer supported which makes
+      the bounding box operations much more efficient.
+  - connnector module:
+    - renamed _xxx -> xxx_pt
+  - epsfile module:
+    - removed showbbox argument of epsfile class
+  - text module:
+    - default handling of texmessages as in the new attribute scheme
+    - multiple insert bug fixed
+    - made left, right, width, height, depth information available (x length
+      not taking into account box transformations)
+    - ignore tex message "Please type a command or say `\\end'"
+    - added textboxes that are sequentially filled (experimental)
+  - examples:
+    - mandel.py (contributed by Stephen Phillips)
+  - unit module:
+    - length comparision (David Beach)
+    - x-scale for TeX
+    - more unit tests
+  - mathtree module:
+    - switched to the new parser using pythons parser module
+  - data module:
+    - removed, it all lives in the graph.data module now, while before it
+      was splitted into two separate modules
+  - tex module:
+    - not imported by default anymore
+    - obsolete warning when importing this module
+
+0.5.1 (2004/01/22):
+  - distribution:
+    - include missing c-files for optional extension modules
+  - prolog module:
+    - fix unpaired BeginProcSet/EndProcSet in font enconding
+
+0.5 (2004/01/20):
+  - setup.py and distribution:
+    - allow customization of the extension modules built (via setup.cfg)
+    - disable building pykpathsea module by default
+    - more detailed description of install process in INSTALL
+    - provide more information and pointers to other files in README
+    - include example data files in distribution (suggested by Andrea Riciputi)
+    - force dvips to write ps files instead of printing them (suggested by Otto Tronarp)
+    - includ pyxfaq.pdf in distribution
+  - text module:
+    - improved is-readable test for lfs files and pyx.def file
+    - explicitly quit (La)TeX in cleantmp (helps when quitting with <Ctrl>C)
+    - showwaitfortex implemented following a suggestion by Fernando Perez
+      (waitfortex is increased to 60 seconds now)
+    - support of TeX extension --ipc for reading dvi results while TeX keeps running
+    - configurable font mapping files (via pyxrc or parameter of the texrunner constructor)
+    - markers to get access to positions within TeX expressions
+    - fix: allow for e-tex in texmessage.start (reported by Andrea Riciputi)
+    - fix: print warning at syntax errors in font mapping file and continue (cf. bug #795271)
+    - remove limitation on number of fonts in dvi file
+    - added native virtual font support
+    - dvicopy support not needed anymore (it is still available, but obsolete and
+      removed from the documentation)
+    - do not include too many glyphs in the eps file
+    - _xxx -> xxx_pt renaming
+  - dvifile module (NEW):
+    - separated from the text module
+    - dvifile class returns standard pyx canvas instances on readpage
+  - graph module:
+    - removed manualpart and partitioners mix keyword
+    - results of the splitting at "=" in graph.function were not stripped
+    - skip title=None in key (cf. bug #821284), properly align a single key entry
+    - another (the last?!) axis redesign: axispos -> class of its own
+    - some axispos name have changed slightly (zeroline -> zeropath etc.)
+    - tick/data-vmin/vmax removed
+    - pathaxis
+    - linkaxis
+    - minor enhancements in exponentionaltexter
+    - axes alongs paths including a set of examples
+    - mixing a partitioner and manual ticks by two distinct keyword arguments now
+    - _xxx -> xxx_pt renaming
+    - part -> parter renaming
+  - canvas module:
+    - stroke, fill, draw, set and insert do no longer accept variable length argument lists but
+      an attribute list as last argument
+    - stroke and fill now support trafos (TODO: documentation)
+    - uppercase version of a4, a3, ... paperformats
+  - config module:
+    - new module for loading PyX configuration information
+  - pyx module:
+    - automatically import main modules into pyx namespace as suggested by Fernando 
+      Perez.
+  - path module:
+    - check for sorting of parameter list passed to path.split method
+    - _xxx -> xxx_pt renaming
+  - deco module (NEW): 
+    - contains decoratedpath and decorators from canvas module
+    - all predefined decorators are instances now (deco.stroked is thus ok) and 
+      attributes have to be passed explicitely, e.g., deco.earrow.small(attrs=color.rgb.red) 
+      and deco.stroked([color.rgb.blue])
+  - style module (NEW):
+    - contains all line- and fillstyles which formerly had been defined in the canvas module
+    - dash now supports relative dash lengths (as suggested by Otto Tronarp)
+  - mathtree module:
+    - fixed incorrect handling of - (for instance -x**2 was not negative)
+  - attrlist module:
+    - contents have been moved to the (obsolete) tex module, which was the only user anyhow, and
+      the module itself was removed
+  - t1strip module:
+    - new fallback solution in pure python
+    - bugfix: pyxadapt.h needs to open files binary under Windows (reported by Gary Pajer)
+  - box module:
+    - _xxx -> xxx_pt renaming
+  - trafo module:
+    - _xxx -> xxx_pt renaming
+
+0.4.1 (2003/09/17):
+  - canvas module:
+    - "in" to "inch" in paperformats
+  - text module:
+    - fix pyx.def hack occuring whenever \ProcessOptions* was used by a package
+  - pykpathsea module:
+    - implement different file formats for Python version of module
+  - t1strip module:
+    - python fallback solution should behave the same way as c extension module (closes SF bug #799182 reported
+      by Marcus Mendenhall)
+  - __init__.py:
+    - added "connector" to __all__
+
+0.4 (2003/08/22):
+  - graph module:
+    - separate texter out of the axispainter
+    - axis/partitioner/texter/painter/axispos redesign & interfaces
+    - tick.text is renamed to tick.label
+    - ticks and labels are renamed to tickpos/tickdist and labelpos/labeldist in partitioning
+    - ticks can be used in the part to mix a partitioner with some manual ticks
+      -> manualpart and the mix technique is not needed anymore
+         (both things are still available and working, but they will be removed in the future)
+    - _ensurefrac is implemented inside the frac constructor now; initialization is possible by:
+      - a (enum, denom) tuple now (previously there were two arguments)
+      - a string (as before via _ensurefrac)
+      - exponential strings are allowed as well (e.g. "1e10" etc.)
+      - a float (precision is determined by floatprecision -- the number of decimal places)
+    - dense -> density
+    - axis.maxworse
+    - axis interface
+  - text module:
+    - reset() method for the texrunner
+    - automatic restart of a TeX instance with the same preamble (preamble changes are not possible)
+    - texmessage.loadfd for accepting font description loading
+    - don't bail out on width_index == 0, but mark character invalid instead
+    - dvicopy flag
+    - support for specials; pyxgraphics flag
+    - support psfonts.map: font names, font encodings
+    - bugfix \def\ProcessPyXBox -> \long\def\ProcessPyXBox
+    - improved lfs handling
+  - data module:
+    - full documentation via doc strings
+  - connector module:
+    - some preliminary version
+  - box module:
+    - multiple radii (up to two per point) and softnesses
+    - ensurecenter added --- do we always force the creation of a center?
+  - path module:
+    - lentopar methods added including some tests
+  - epsfile module:
+    - new parameter bbox allows to override the bounding box of the eps file
+
+  bugfixes:
+  - text module:
+    - derive TFMError and DVIError correctly from exceptions.Exception
+    - close files and pipes, if they are no longer used (thanks to Marcus Mendenhall)
+    - remove DeprecationWarning in Python 2.3 (thanks to Marcus Mendenhall)
+  - box module:
+    - correct rounding algorithm (Michael Schindler)
+  - graph module:
+    - refer to the graphs texrunner instead of the defaulttexrunner (cf. #728209)
+    - rounding towards zero bugfix in autolinpart
+    - log axis range rating bugfix
+  - mathtree module:
+    - addarg bugs (#738724)
+  - epsfile module:
+    - fix mixing up of height and width in scale calculation
+  - and various other fixer here and there
+
+0.3.1 (2003/04/04):
+  - text module:
+    - fix bug in dvi rule code where width was height
+    - fix preamble attribute checking bug
+    - fix texmessage.load pattern search instead of pattern match bug
+    - renamed vbox to parbox (was done in 0.3 partially only)
+  - data module:
+    - allow for tuples in arguments of the data class
+    - convenience: exchanged order of named parameters in data.data
+  - graph module:
+    - convenience: allow for part=None in _axis (base of linaxis and logaxis)
+  - examples:
+    - added a latex example (requested)
+    - added a attributechange example (requested)
+    - added back the integral example (requested; prior PyX 0.3 it was part of the user manual)
+    - small change in vector example (allow for the access to the texrunner)
+    - examples included in source distribution
+  - canvas module:
+    - correct arrow template calculation for very short paths
+
+0.3 (2003/03/31):
+  - examples
+    - new easy to use example generation (will hopefully lead to nice examples)
+  - unit box:
+    - new module for handling of convex polygons (taken out of the graph module)
+  - unit helper:
+    - new module containing a collection of helper functions (taken out of the graph module)
+    - moved the attrlist into helper -- as plain functions; attrlist becomes obsolete
+  - text module:
+    - new module: a new and preferable integration of TeX/LaTeX
+  - t1strip module:
+    - strip glyphs from pfa/pfb-fonts
+    - there is a C implementation taken from pdftex
+    - fallback solution via an external program (pfb2pfa)
+  - pykpathsea module:
+    - (partial) C binding to libkpathsea
+    - fallback solution via an external program (kpsewhich)
+  - graph module:
+    - removed some code duplication (various axis painters)
+    - use text module instead of the obsolete tex module
+    - allow for tailing zeros of automatic generated labels
+    - allow for missing data in bar graphs -> skipmissing parameter
+    - remove the support for variables given as keyword arguments in data constructor
+    - use context instead of extern for extern variables and functions
+    - graph keys; titles in data/function/etc.
+  - unit module:
+    - new classes for visual and width lengths, aliases for user length (u_pt = pt)
+    - all length classes have now by default a quantifier 1 (instead of 0), such that,
+      for instance, 5*unit.t_cm() == unit.t_cm(5)
+    - default_unit now has to be set via unit.set. For instance: unit.set(defaultunit="m").
+    - convert_to is now an internal function, which moreover does not longer accept tuples or lists
+  - bbox module:
+    - new class _bbox (the former bbox) which accepts points in the constructor. This is used
+      for internal purposes.
+    - the bbox constructor now accepts user lengths in the constructor.
+    - new methods height, width, top, bottom, left, right
+    - ll & ur ???, what about ul and lr -> ugly!
+    - enlarge (was enhance) now allows selective enlargement to the left, bottom, right and top
+    - output HiResBoundingBox
+    - never reduce bbox upon output
+  - epsfile module:
+    - new constructor signature, more in line with rest of PyX:
+      epsfile(x, y, filename, **additional_args)
+  - data module:
+    - removed additional column support in addcolumn; removed _addcolumn
+    - line reduction for datafile like the every parameter in gnuplot
+  - canvas module:
+    - new way of PS prolog generation that writes only necessary parts
+    - added support for patterns
+    - canvas.insert() now supports arguments
+    - bbox of canvas can be specified in writetofile command explicitely
+    - writetofile does not return self anymore
+    - arrow template now uses intersection with circle to get size right
+      (as per a suggestion by Michael Schindler)
+  - mathtree module:
+    - added abs function
+    - changed the handling of extern functions and all variables
+  - color module:
+    - gradient renamed to palette
+  - numerous bugfixes:
+    - problem with sizefile on windows (tex module)
+    - allow for strings in graphxy's width and height; allow for width only (graph module)
+    - disable rating for labelattrs equals None (graph module)
+    - defaultstyle selection, when a list of data is provided to the plot function (graph module)
+    - traverse when adding functions as arguments of operators (mathtree module)
+    - allow for extern functions in addcolumn (data module)
+    - just one common place for the version number
+    - fix incorrect exception name MathError (path module)
+    - prevent double return of intersections for closed sub paths
+    - ...
+
+0.2 (2003/01/17):
+  - unit module:
+    - allow division of length by numbers
+  - trafo module:
+    - new transformation: slant
+    - renamed all trafo methods to use the participle (i.e translate->translated)
+    - the name of all trafo subclasses are verbs (i.e. translation->translate)
+  - graph module:
+    - mark class renamed to symbol
+    - (text-)box distance measurement
+    - moved axis partitioning to axis and axis painter
+    - automatic axis partitioning (now officially: general cleanup, distance measurement, documentation)
+    - splitaxis
+    - baraxis, baraxispainter, and bar style
+  - data module:
+    - previously named datafile module
+    - class "_datafile" renamed to class "data"
+    - class sectionfile added
+    - testsuite
+  - mathtree module:
+    - extern variables and functions (support in graph.function, graph.paramfunction and data.data)
+    - testsuite
+  - text module:
+    - deferred to Version 0.3
+    - running TeX "on the fly" is basically implemented
+  - numerous bugfixes:
+    - transformation bug (#624068, trafo module)
+    - canvas transformations (canvas module???)
+    - textbox alignment (graph module)
+    - return linewidth upon calculation with linewidths (unit module)
+    - allow column number variables with several digits
+    - ...
+  - british and american spellings (color module, graph module)
+  - small logo modifications
+
+0.1 (2002/10/07):
+  - initial release
