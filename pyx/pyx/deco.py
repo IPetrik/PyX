@@ -370,7 +370,7 @@ def _arrowhead(anormpath, size, angle, constriction):
     return arrow
 
 
-_base = 6 * unit.v_pt
+_base = unit.v_pt(6)
 
 class arrow(deco, attr.attr):
 
@@ -380,7 +380,7 @@ class arrow(deco, attr.attr):
         self.attrs = attr.mergeattrs([style.linestyle.solid, filled] + attrs)
         attr.checkattrs(self.attrs, [deco, style.fillstyle, style.strokestyle])
         self.position = position
-        self.size = size
+        self.size = unit.length(size, default_type="v")
         self.angle = angle
         self.constriction = constriction
 
@@ -475,10 +475,10 @@ class cycloid(deco, attr.attr):
     The outcome looks like a metal spring with the originalpath as the axis.
     """
 
-    def __init__(self, radius=0.5*unit.t_cm, loops=10, skipfirst=1*unit.t_cm, skiplast=1*unit.t_cm, curvesperloop=2, left=1):
-        self.skipfirst = skipfirst
-        self.skiplast = skiplast
-        self.radius = radius
+    def __init__(self, radius=0.5, loops=10, skipfirst=1, skiplast=1, curvesperloop=2, left=1):
+        self.skipfirst = unit.length(skipfirst, default_type="v")
+        self.skiplast = unit.length(skiplast, default_type="v")
+        self.radius = unit.length(radius, default_type="v")
         self.halfloops = 2 * int(loops) + 1
         self.curvesperhloop = int(0.5 * curvesperloop)
         self.sign = left and 1 or -1
@@ -595,7 +595,7 @@ class smoothed(deco, attr.attr):
     """
 
     def __init__(self, radius, softness=1, strict=0):
-        self.radius = radius
+        self.radius = unit.length(radius, default_type="v")
         self.softness = softness
         self.strict = strict
 
@@ -704,7 +704,7 @@ class smoothed(deco, attr.attr):
                 Ga = a*abs(a)*curvA*0.5 + b*T - D
                 Gb = b*abs(b)*curvB*0.5 + a*T + E
 
-                a, b = a - 0.5*invDG[0][0]*Ga - 0.5*invDG[0][1]*Gb, b - 0.5*invDG[1][0]*Ga - 0.5*invDG[1][1]*Gb
+                a, b = a - invDG[0][0]*Ga - invDG[0][1]*Gb, b - invDG[1][0]*Ga - invDG[1][1]*Gb
 
         # the curvature may change its sign if we would get a cusp
         # in the optimal case we have a>0 and b>0
@@ -791,7 +791,7 @@ class smoothed(deco, attr.attr):
                 if isinstance(bpart, path.normline):
                     newpath.append(path.lineto_pt(*bpart.end_pt()))
                 elif isinstance(bpart, path.normcurve):
-                    newpath.append(path.curveto_pt(bpart.x1_pt, bpart.y1_pt, bpart.x2_pt, bpart.y2_pt, bpart.x3_pt, bpart.y3_pt))
+                    newpath.append(path.curveto_pt(bpart.x1, bpart.y1, bpart.x2, bpart.y2, bpart.x3, bpart.y3))
                 do_moveto = 0
 
             # 4. Do the splitting for the first to the last element,
@@ -810,7 +810,7 @@ class smoothed(deco, attr.attr):
                     if isinstance(mpart, path.normline):
                         newpath.append(path.lineto_pt(*mpart.end_pt()))
                     elif isinstance(mpart, path.normcurve):
-                        newpath.append(path.curveto_pt(mpart.x1_pt, mpart.y1_pt, mpart.x2_pt, mpart.y2_pt, mpart.x3_pt, mpart.y3_pt))
+                        newpath.append(path.curveto_pt(mpart.x1, mpart.y1, mpart.x2, mpart.y2, mpart.x3, mpart.y3))
 
                 # add the curve(s) replacing the corner
                 if isinstance(thisnpel, path.normline) and isinstance(nextnpel, path.normline) \
@@ -860,25 +860,25 @@ class smoothed(deco, attr.attr):
                 if isinstance(epart, path.normline):
                     newpath.append(path.lineto_pt(*epart.end_pt()))
                 elif isinstance(epart, path.normcurve):
-                    newpath.append(path.curveto_pt(epart.x1_pt, epart.y1_pt, epart.x2_pt, epart.y2_pt, epart.x3_pt, epart.y3_pt))
+                    newpath.append(path.curveto_pt(epart.x1, epart.y1, epart.x2, epart.y2, epart.x3, epart.y3))
 
         dp.strokepath = newpath
         return dp
 
 smoothed.clear = attr.clearclass(smoothed)
 
-_base = unit.v_cm
-smoothed.SHARP = smoothed(radius=_base/math.sqrt(64))
-smoothed.SHARp = smoothed(radius=_base/math.sqrt(32))
-smoothed.SHArp = smoothed(radius=_base/math.sqrt(16))
-smoothed.SHarp = smoothed(radius=_base/math.sqrt(8))
-smoothed.Sharp = smoothed(radius=_base/math.sqrt(4))
-smoothed.sharp = smoothed(radius=_base/math.sqrt(2))
-smoothed.normal = smoothed(radius=_base)
-smoothed.round = smoothed(radius=_base*math.sqrt(2))
-smoothed.Round = smoothed(radius=_base*math.sqrt(4))
-smoothed.ROund = smoothed(radius=_base*math.sqrt(8))
-smoothed.ROUnd = smoothed(radius=_base*math.sqrt(16))
-smoothed.ROUNd = smoothed(radius=_base*math.sqrt(32))
-smoothed.ROUND = smoothed(radius=_base*math.sqrt(64))
+_base = 1
+smoothed.SHARP = smoothed(radius="%f cm" % (_base/math.sqrt(64)))
+smoothed.SHARp = smoothed(radius="%f cm" % (_base/math.sqrt(32)))
+smoothed.SHArp = smoothed(radius="%f cm" % (_base/math.sqrt(16)))
+smoothed.SHarp = smoothed(radius="%f cm" % (_base/math.sqrt(8)))
+smoothed.Sharp = smoothed(radius="%f cm" % (_base/math.sqrt(4)))
+smoothed.sharp = smoothed(radius="%f cm" % (_base/math.sqrt(2)))
+smoothed.normal = smoothed(radius="%f cm" % (_base))
+smoothed.round = smoothed(radius="%f cm" % (_base*math.sqrt(2)))
+smoothed.Round = smoothed(radius="%f cm" % (_base*math.sqrt(4)))
+smoothed.ROund = smoothed(radius="%f cm" % (_base*math.sqrt(8)))
+smoothed.ROUnd = smoothed(radius="%f cm" % (_base*math.sqrt(16)))
+smoothed.ROUNd = smoothed(radius="%f cm" % (_base*math.sqrt(32)))
+smoothed.ROUND = smoothed(radius="%f cm" % (_base*math.sqrt(64)))
 

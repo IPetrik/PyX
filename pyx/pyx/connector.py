@@ -23,7 +23,7 @@
 
 import math
 from math import pi, sin, cos, atan2, tan, hypot, acos, sqrt
-import path, unit, helper
+import path, trafo, unit, helper
 try:
     from math import radians, degrees
 except ImportError:
@@ -35,6 +35,13 @@ except ImportError:
 #########################
 ##   helpers
 #########################
+
+def _topt(length, default_type=None):
+    if length is None: return None
+    if default_type is not None:
+        return unit.topt(unit.length(length, default_type=default_type))
+    else:
+        return unit.topt(unit.length(length))
 
 class connector_pt(path.normpath):
 
@@ -335,8 +342,8 @@ class line(line_pt):
 
     def __init__(self, box1, box2, boxdists=[0,0]):
 
-        boxdists_pt = (unit.topt(helper.getitemno(boxdists, 0)),
-                       unit.topt(helper.getitemno(boxdists, 1)))
+        boxdists_pt = (_topt(helper.getitemno(boxdists, 0), default_type="v"),
+                       _topt(helper.getitemno(boxdists, 1), default_type="v"))
 
         line_pt.__init__(self, box1, box2, boxdists=boxdists_pt)
 
@@ -353,13 +360,13 @@ class curve(curve_pt):
                  absbulge=0, relbulge=0.39,
                  boxdists=[0,0]):
 
-        boxdists_pt = (unit.topt(helper.getitemno(boxdists, 0)),
-                       unit.topt(helper.getitemno(boxdists, 1)))
+        boxdists_pt = (_topt(helper.getitemno(boxdists, 0), default_type="v"),
+                       _topt(helper.getitemno(boxdists, 1), default_type="v"))
 
         curve_pt.__init__(self, box1, box2,
                         relangle1=relangle1, relangle2=relangle2,
                         absangle1=absangle1, absangle2=absangle2,
-                        absbulge=unit.topt(absbulge), relbulge=relbulge,
+                        absbulge=_topt(absbulge), relbulge=relbulge,
                         boxdists=boxdists_pt)
 
 class arc(arc_pt):
@@ -373,14 +380,12 @@ class arc(arc_pt):
     def __init__(self, box1, box2, relangle=45,
                  absbulge=None, relbulge=None, boxdists=[0,0]):
 
-        boxdists_pt = (unit.topt(helper.getitemno(boxdists, 0)),
-                       unit.topt(helper.getitemno(boxdists, 1)))
+        boxdists_pt = (_topt(helper.getitemno(boxdists, 0), default_type="v"),
+                       _topt(helper.getitemno(boxdists, 1), default_type="v"))
 
-        if absbulge is not None:
-            absbulge = unit.topt(absbulge)
         arc_pt.__init__(self, box1, box2,
                       relangle=relangle,
-                      absbulge=absbulge, relbulge=relbulge,
+                      absbulge=_topt(absbulge), relbulge=relbulge,
                       boxdists=boxdists_pt)
 
 
@@ -400,24 +405,16 @@ class twolines(twolines_pt):
                  arcradius=None,
                  boxdists=[0,0]):
 
-        boxdists_pt = (unit.topt(helper.getitemno(boxdists, 0)),
-                       unit.topt(helper.getitemno(boxdists, 1)))
+        boxdists_pt = (_topt(helper.getitemno(boxdists, 0), default_type="v"),
+                       _topt(helper.getitemno(boxdists, 1), default_type="v"))
 
-        if length1 is not None:
-            length1 = unit.topt(length1)
-        if length2 is not None:
-            length2 = unit.topt(length2)
-        if bezierradius is not None:
-            bezierradius = unit.topt(bezierradius)
-        if arcradius is not None:
-            arcradius = unit.topt(arcradius)
         twolines_pt.__init__(self, box1, box2,
                        absangle1=absangle1, absangle2=absangle2,
                        relangle1=relangle1, relangle2=relangle2,
                        relangleM=relangleM,
-                       length1=length1, length2=length2,
-                       bezierradius=bezierradius, beziersoftness=1,
-                       arcradius=arcradius,
+                       length1=_topt(length1), length2=_topt(length2),
+                       bezierradius=_topt(bezierradius), beziersoftness=1,
+                       arcradius=_topt(arcradius),
                        boxdists=boxdists_pt)
 
 

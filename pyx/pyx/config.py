@@ -21,10 +21,10 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import ConfigParser, os.path
-import siteconfig
+import ConfigParser
+import os.path
 
-cflist = [siteconfig.pyxrc,  os.path.expanduser("~/.pyxrc")]
+cflist = ["/etc/pyxrc",  os.path.expanduser("~/.pyxrc")]
 
 config = ConfigParser.ConfigParser()
 config.read(cflist)

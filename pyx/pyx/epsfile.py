@@ -22,7 +22,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import re
-import base, bbox, prolog, unit, trafo
+import base, bbox, canvas, prolog, unit, trafo
 
 # PostScript-procedure definitions (cf. 5002.EPSF_Spec_v3.0.pdf)
 # with important correction in EndEPSF:
@@ -53,7 +53,7 @@ _EndEPSF = prolog.definition("EndEPSF", """{
 } bind""")
 
 def _readbbox(filename):
-    """returns bounding box of EPS file filename as 4-tuple (llx_pt, lly_pt, urx_pt, ury_pt)"""
+    """returns bounding box of EPS file filename as 4-tuple (llx, lly, urx, ury)"""
 
     try:
         file = open(filename, "r")
@@ -83,8 +83,8 @@ def _readbbox(filename):
         bbmatch = bbpattern.match(line)
         if bbmatch is not None:
             # conversion strings->int
-            (llx_pt, lly_pt, urx_pt, ury_pt) = map(int, bbmatch.groups()) 
-            return bbox.bbox_pt(llx_pt, lly_pt, urx_pt, ury_pt)
+            (llx, lly, urx, ury) = map(int, bbmatch.groups()) 
+            return bbox._bbox(llx, lly, urx, ury)
     else:
         raise IOError, \
               "bounding box not found in EPS file '%s'" % filename
@@ -123,9 +123,9 @@ class epsfile(base.PSCmd):
             if scale is not None:
                 raise ValueError("cannot set both width and/or height and scale simultaneously")
             if height is not None:
-                self.scaley = unit.topt(height)/(self.mybbox.ury_pt-self.mybbox.lly_pt)
+                self.scaley = unit.topt(height)/(self.mybbox.ury-self.mybbox.lly)
             if width is not None:
-                self.scalex = unit.topt(width)/(self.mybbox.urx_pt-self.mybbox.llx_pt)
+                self.scalex = unit.topt(width)/(self.mybbox.urx-self.mybbox.llx)
 
             if self.scalex is None:
                 self.scalex = self.scaley
@@ -134,11 +134,11 @@ class epsfile(base.PSCmd):
 
         # set the actual width and height of the eps file (after a
         # possible scaling)
-        self._width  = self.mybbox.urx_pt-self.mybbox.llx_pt
+        self._width  = (self.mybbox.urx-self.mybbox.llx)
         if self.scalex:
             self._width *= self.scalex
 
-        self._height = self.mybbox.ury_pt-self.mybbox.lly_pt
+        self._height  = (self.mybbox.ury-self.mybbox.lly)
         if self.scaley:
             self._height *= self.scaley
 
@@ -171,7 +171,7 @@ class epsfile(base.PSCmd):
             self.trafo = self.trafo * trafo.scale_pt(self.scalex, self.scaley)
 
         if translatebbox:
-            self.trafo = self.trafo * trafo.translate_pt(-self.mybbox.llx_pt, -self.mybbox.lly_pt)
+            self.trafo = self.trafo * trafo.translate_pt(-self.mybbox.llx, -self.mybbox.lly)
 
     def bbox(self):
         return self.mybbox.transformed(self.trafo)

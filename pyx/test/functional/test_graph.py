@@ -8,7 +8,7 @@ from pyx import mathtree
 text.set(mode="latex")
 
 def test_multiaxes_data(c, x, y):
-    g = c.insert(graph.graphxy(x, y, height=5, # key=graph.key.key(pos="tl"),
+    g = c.insert(graph.graphxy(x, y, height=5, key=graph.key.key(pos="tl"),
                                x=graph.axis.log(title="$W$", manualticks=[graph.axis.tick.tick(math.sqrt(8)*100, label="?"), graph.axis.tick.tick(math.sqrt(8), label="$\sqrt{8}$")]),
                                y=graph.axis.log(title=r"$PPP_1$",
                                                painter=graph.axis.painter.regular(titledirection=None)),
@@ -19,9 +19,9 @@ def test_multiaxes_data(c, x, y):
                                y5=graph.axis.log(title="$P_5$")))
     g.plot((graph.data.file("data/testdata", x=1, y="sqrt(sqrt($3))", title="mytitle"),
             graph.data.file("data/testdata", x=1, y2=4),
-            graph.data.file("data/testdata", x=1, y3=5, title=None),
+            graph.data.file("data/testdata", x=1, y3=5),
             graph.data.file("data/testdata", x=1, y5=6)),
-           styles=[graph.style.pointpos(), graph.style.symbol(symbolattrs=[deco.stroked.clear, color.palette.RedGreen, graph.style.symbol.changestrokedfilled], symbol=graph.style.symbol.changesquaretwice)])
+           style=graph.style.symbol(symbolattrs=[deco.stroked.clear, color.palette.RedGreen, graph.style.symbol.changestrokedfilled], symbol=graph.style.symbol.changesquaretwice))
     g.finish()
 
 def test_piaxis_function(c, x, y):
@@ -29,7 +29,7 @@ def test_piaxis_function(c, x, y):
     g = c.insert(graph.graphxy(x, y, height=5, x=xaxis))
     # g = c.insert(graph.graphxy(x, y, height=5, x=xaxis, x2=xaxis)) # TODO
     g.plot([graph.data.function("y=sin(x-i*pi/10)", context={"i": i}) for i in range(20)],
-           styles=[graph.style.pointpos(), graph.style.line(lineattrs=[color.palette.Hue])])
+           style=graph.style.line(lineattrs=[color.palette.Hue]))
     g.finish()
 
 def test_textaxis_errorbars(c, x, y):
@@ -88,12 +88,11 @@ def test_split2(c, x, y):
 c = canvas.canvas()
 test_multiaxes_data(c, 0, 21)
 test_piaxis_function(c, 0, 14)
-#test_textaxis_errorbars(c, 0, 7)
-#test_ownmark(c, 0, 0)
-#test_allerrorbars(c, -7, 0)
-#test_split(c, -7, 7)
-#test_split2(c, -7, 14)
+test_textaxis_errorbars(c, 0, 7)
+test_ownmark(c, 0, 0)
+test_allerrorbars(c, -7, 0)
+test_split(c, -7, 7)
+test_split2(c, -7, 14)
 
 c.writeEPSfile("test_graph", paperformat="a4")
-c.writePDFfile("test_graph", paperformat="a4")
 

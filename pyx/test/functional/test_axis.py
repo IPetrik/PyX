@@ -37,7 +37,7 @@ c.insert(pathaxis(path.path(path.moveto(0, 11), path.lineto(8, 11)),
                         lin(texter=rational(suffix="\pi"), **lintest)))
 lintest = {"title": "axis title", "min": 0, "max": 2*math.pi, "divisor": math.pi, "parter": linparter("0.5")}
 c.insert(pathaxis(path.path(path.moveto(10, 11), path.lineto(18, 11)),
-                        lin(texter=rational(numsuffix="\pi", over="%s/%s"), **lintest)))
+                        lin(texter=rational(enumsuffix="\pi", over="%s/%s"), **lintest)))
 lintest = {"min": 0, "max": 2*math.pi, "divisor": math.pi, "parter": linparter("0.125")}
 c.insert(pathaxis(path.circle(4, 17, 4),
                         lin(texter=rational(suffix="\pi"), **lintest)))
@@ -45,5 +45,4 @@ lintest = {"min": 0, "max": 2*math.pi, "divisor": math.pi/180, "parter": linpart
 c.insert(pathaxis(path.circle(14, 17, 4),
                         lin(painter=regular(labeldirection=rotatetext.parallel), **lintest)))
 c.writeEPSfile("test_axis", paperformat="a4")
-c.writePDFfile("test_axis", paperformat="a4")
 

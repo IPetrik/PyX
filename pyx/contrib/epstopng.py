@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: ISO-8859-1 -*-
 #
 #
 # Copyright (C) 2003 André Wobst <wobsta@users.sourceforge.net>
