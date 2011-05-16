@@ -1,3 +1,0 @@
-Bar graphs in 3d
-
-The bar style can also be used in 3d graphs.
