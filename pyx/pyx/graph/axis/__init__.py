@@ -21,11 +21,10 @@
 
 
 __allmodules__ = ["painter", "parter", "rater", "texter", "tick"]
-import importlib
 for module in __allmodules__:
-    importlib.import_module('.' + module, package='pyx.graph.axis')
+    __import__(module, globals(), locals(), [])
 
-from . import axis
+import axis
 __allaxis__ = ["linear", "lin", "logarithmic", "log",
                "bar", "nestedbar", "split",
                "sizedlinear", "sizedlin", "autosizedlinear", "autosizedlin",

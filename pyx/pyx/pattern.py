@@ -20,10 +20,9 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-import io, math, warnings
-from . import attr, canvas, path, pdfwriter, pswriter, style, unit, trafo
-from . import writer as writermodule
-from . import bbox as bboxmodule
+import cStringIO, math, warnings
+import attr, canvas, path, pdfwriter, pswriter, style, unit, trafo
+import bbox as bboxmodule
 
 class _marker: pass
 
@@ -69,10 +68,10 @@ class pattern(canvas.canvas, attr.exclusiveattr, style.fillstyle):
 
     def processPS(self, file, writer, context, registry):
         # process pattern, letting it register its resources and calculate the bbox of the pattern
-        patternfile = writermodule.writer(io.BytesIO())
+        patternfile = cStringIO.StringIO()
         realpatternbbox = bboxmodule.empty()
         canvas.canvas.processPS(self, patternfile, writer, pswriter.context(), registry, realpatternbbox)
-        patternproc = patternfile.file.getvalue()
+        patternproc = patternfile.getvalue()
         patternfile.close()
 
         if self.xstep is None:
@@ -100,7 +99,7 @@ class pattern(canvas.canvas, attr.exclusiveattr, style.fillstyle):
         patterntrafostring = self.patterntrafo is None and "matrix" or str(self.patterntrafo)
         patternsuffix = "end\n} bind\n>>\n%s\nmakepattern" % patterntrafostring
 
-        registry.add(pswriter.PSdefinition(self.id, patternprefix.encode("ascii") + patternproc + patternsuffix.encode("ascii")))
+        registry.add(pswriter.PSdefinition(self.id, "".join((patternprefix, patternproc, patternsuffix))))
 
         # activate pattern
         file.write("%s setpattern\n" % self.id)
@@ -110,10 +109,10 @@ class pattern(canvas.canvas, attr.exclusiveattr, style.fillstyle):
         # we create our own registry, which we merge immediately in the main registry
         patternregistry = pdfwriter.PDFregistry()
 
-        patternfile = writermodule.writer(io.BytesIO())
+        patternfile = cStringIO.StringIO()
         realpatternbbox = bboxmodule.empty()
         canvas.canvas.processPDF(self, patternfile, writer, pdfwriter.context(), patternregistry, realpatternbbox)
-        patternproc = patternfile.file.getvalue()
+        patternproc = patternfile.getvalue()
         patternfile.close()
 
         registry.mergeregistry(patternregistry)
@@ -325,5 +324,5 @@ class PDFpattern(pdfwriter.PDFobject):
             file.write("/Filter /FlateDecode\n")
         file.write(">>\n"
                    "stream\n")
-        file.write_bytes(content)
+        file.write(content)
         file.write("endstream\n")

@@ -21,14 +21,14 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-import io, copy, warnings, time
+import cStringIO, copy, warnings, time
 try:
     import zlib
-    haszlib = True
+    haszlib = 1
 except:
-    haszlib = False
+    haszlib = 0
 
-from . import bbox, config, style, unit, version, trafo, writer
+import bbox, config, style, unit, version, trafo
 
 
 
@@ -45,7 +45,7 @@ class PDFregistry:
     def add(self, object):
         """ register object, merging it with an already registered object of the same type and id """
         sameobjects = self.types.setdefault(object.type, {})
-        if object.id in sameobjects:
+        if sameobjects.has_key(object.id):
             sameobjects[object.id].merge(object)
         else:
             self.objects.append(object)
@@ -104,11 +104,11 @@ class PDFregistry:
 
     def writeresources(self, file):
         file.write("<<\n")
-        file.write("/ProcSet [ %s ]\n" % " ".join(["/%s" % p for p in list(self.procsets.keys())]))
+        file.write("/ProcSet [ %s ]\n" % " ".join(["/%s" % p for p in self.procsets.keys()]))
         if self.resources:
-            for resourcetype, resources in list(self.resources.items()):
+            for resourcetype, resources in self.resources.items():
                 file.write("/%s <<\n%s\n>>\n" % (resourcetype, "\n".join(["/%s %i 0 R" % (name, self.getrefno(object))
-                                                                          for name, object in list(resources.items())])))
+                                                                          for name, object in resources.items()])))
         file.write(">>\n")
 
 
@@ -259,27 +259,27 @@ class PDFpage(PDFobject):
 
 class PDFcontent(PDFobject):
 
-    def __init__(self, page, awriter, registry):
+    def __init__(self, page, writer, registry):
         PDFobject.__init__(self, registry, "content")
-        contentfile = writer.writer(io.BytesIO())
+        contentfile = cStringIO.StringIO()
         self.bbox = bbox.empty()
         acontext = context()
-        page.processPDF(contentfile, awriter, acontext, registry, self.bbox)
-        self.content = contentfile.file.getvalue()
+        page.processPDF(contentfile, writer, acontext, registry, self.bbox)
+        self.content = contentfile.getvalue()
         contentfile.close()
 
-    def write(self, file, awriter, registry):
-        if awriter.compress:
+    def write(self, file, writer, registry):
+        if writer.compress:
             content = zlib.compress(self.content)
         else:
             content = self.content
         file.write("<<\n"
                    "/Length %i\n" % len(content))
-        if awriter.compress:
+        if writer.compress:
             file.write("/Filter /FlateDecode\n")
         file.write(">>\n"
                    "stream\n")
-        file.write_bytes(content)
+        file.write(content)
         file.write("endstream\n")
 
 
@@ -316,8 +316,7 @@ class PDFwriter:
         catalog = PDFcatalog(document, self, registry)
         registry.add(catalog)
 
-        file = writer.writer(file)
-        file.write_bytes(b"%PDF-1.4\n%\xc3\xb6\xc3\xa9\n")
+        file.write("%%PDF-1.4\n%%%s%s%s%s\n" % (chr(195), chr(182), chr(195), chr(169)))
         registry.write(file, self, catalog)
         file.close()
 
@@ -384,13 +383,14 @@ class context:
         self.strokeattr = 1
         self.fillattr = 1
         self.selectedfont = None
+        self.textregion = 0
         self.trafo = trafo.trafo()
         self.fillstyles = []
         self.fillrule = 0
 
     def __call__(self, **kwargs):
         newcontext = copy.copy(self)
-        for key, value in list(kwargs.items()):
+        for key, value in kwargs.items():
             setattr(newcontext, key, value)
         return newcontext
 

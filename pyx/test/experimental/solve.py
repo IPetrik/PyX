@@ -379,8 +379,7 @@ class matrix:
     def getnumberofcols(self):
         return self._numberofcols
 
-    def __getitem__(self, xxx_todo_changeme):
-        (row, col) = xxx_todo_changeme
+    def __getitem__(self, (row, col)):
         return self._rows[row][col]
 
     def matrix(self):

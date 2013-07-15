@@ -21,7 +21,7 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-import functools, math, warnings
+import math, warnings
 from pyx import attr, unit, text
 from pyx.graph.axis import painter, parter, positioner, rater, texter, tick
 
@@ -37,7 +37,7 @@ class axisdata:
     graph during initialization."""
 
     def __init__(self, **kwargs):
-        for key, value in list(kwargs.items()):
+        for key, value in kwargs.items():
             setattr(self, key, value)
 
 
@@ -146,23 +146,18 @@ class _regularaxis(_axis):
             return layout(data)
 
         # a variant is a data copy with local modifications to test several partitions
-        @functools.total_ordering
         class variant:
             def __init__(self, data, **kwargs):
                 self.data = data
-                for key, value in list(kwargs.items()):
+                for key, value in kwargs.items():
                     setattr(self, key, value)
 
             def __getattr__(self, key):
                 return getattr(data, key)
 
-            def __lt__(self, other):
+            def __cmp__(self, other):
                 # we can also sort variants by their rate
-                return self.rate < other.rate
-
-            def __eq__(self, other):
-                # we can also sort variants by their rate
-                return self.rate == other.rate
+                return cmp(self.rate, other.rate)
 
         # build a list of variants
         bestrate = None
@@ -389,7 +384,7 @@ class bar(_axis):
 
     def convert(self, data, value):
         if value[0] is None:
-            raise ValueError
+            return None
         axis = data.subaxes[value[0]]
         vmin = axis.vmin
         vmax = axis.vmax
@@ -415,7 +410,7 @@ class bar(_axis):
                 subaxis.vmaxover = position / float(data.size)
             subaxis.setpositioner(subaxispositioner(positioner, subaxis))
             subaxis.create()
-            for layer, subcanvas in list(subaxis.canvas.layers.items()):
+            for layer, subcanvas in subaxis.canvas.layers.items():
                 canvas.layer(layer).insert(subcanvas)
             assert len(subaxis.canvas.layers) == len(subaxis.canvas.items)
             if canvas.extent_pt < subaxis.canvas.extent_pt:
@@ -433,7 +428,7 @@ class bar(_axis):
             subaxis = linkedaxis(subaxis, name)
             subaxis.setpositioner(subaxispositioner(positioner, data.subaxes[name]))
             subaxis.create()
-            for layer, subcanvas in list(subaxis.canvas.layers.items()):
+            for layer, subcanvas in subaxis.canvas.layers.items():
                 canvas.layer(layer).insert(subcanvas)
             assert len(subaxis.canvas.layers) == len(subaxis.canvas.items)
             if canvas.extent_pt < subaxis.canvas.extent_pt:

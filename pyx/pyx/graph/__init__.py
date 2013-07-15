@@ -20,12 +20,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
 
-import importlib
 __allmodules__ = ["data", "key", "style", "axis"]
 for module in __allmodules__:
-    importlib.import_module('.' + module, package='pyx.graph')
+    __import__(module, globals(), locals(), [])
 
-from . import graph
+import graph
 __allgraph__ = ["graphx", "graphxy", "graphxyz"]
 for importfromgraph in __allgraph__:
     locals()[importfromgraph] = getattr(graph, importfromgraph)

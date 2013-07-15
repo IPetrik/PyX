@@ -20,21 +20,21 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-import array, binascii, io, math, re, warnings
+import array, binascii, math, re, warnings
 try:
     import zlib
-    haszlib = True
+    haszlib = 1
 except ImportError:
-    haszlib = False
+    haszlib = 0
 
 
-from pyx import trafo, reader, writer
+from pyx import trafo, reader, pycompat
 from pyx.path import path, moveto_pt, lineto_pt, curveto_pt, closepath
 
 try:
     from _t1code import *
 except:
-    from .t1code import *
+    from t1code import *
 
 
 adobestandardencoding = [None, None, None, None, None, None, None, None,
@@ -658,7 +658,7 @@ class T1file:
         self.encoding = None
 
         self.name, = self.fontnamepattern.search(self.data1).groups()
-        m11, m12, m21, m22, v1, v2 = list(map(float, self.fontmatrixpattern.search(self.data1).groups()[:6]))
+        m11, m12, m21, m22, v1, v2 = map(float, self.fontmatrixpattern.search(self.data1).groups()[:6])
         self.fontmatrix = trafo.trafo_pt(matrix=((m11, m12), (m21, m22)), vector=(v1, v2))
 
     def _eexecdecode(self, code):
@@ -671,11 +671,11 @@ class T1file:
 
     def _eexecencode(self, data):
         """eexec encoding of data"""
-        return encoder(data, self.eexecr, b"PyX!")
+        return encoder(data, self.eexecr, "PyX!")
 
     def _charstringencode(self, data):
         """eexec encoding of data"""
-        return encoder(data, self.charstringr, b"PyX!"[:self.lenIV])
+        return encoder(data, self.charstringr, "PyX!"[:self.lenIV])
 
     def _encoding(self):
         """helper method to lookup the encoding in the font"""
@@ -686,11 +686,11 @@ class T1file:
             self.encoding = adobestandardencoding
         else:
             self.encoding = [None]*256
-            while True:
+            while 1:
                 self.encodingstart = c.pos
                 if c.gettoken() == "dup":
                     break
-            while True:
+            while 1:
                 i = c.getint()
                 glyph = c.gettoken()
                 if 0 <= i < 256:
@@ -702,7 +702,7 @@ class T1file:
                     break
                 assert token == "dup"
 
-    lenIVpattern = re.compile(b"/lenIV\s+(\d+)\s+def\s+")
+    lenIVpattern = re.compile("/lenIV\s+(\d+)\s+def\s+")
     flexhintsubrs = [[3, 0, T1callothersubr, T1pop, T1pop, T1setcurrentpoint, T1return],
                      [0, 1, T1callothersubr, T1return],
                      [0, 2, T1callothersubr, T1return],
@@ -721,17 +721,16 @@ class T1file:
             self.lenIV = int(m.group(1))
         else:
             self.lenIV = 4
-
-        self.emptysubr = self._charstringencode(b"\x0b") # 11, i.e. return
+        self.emptysubr = self._charstringencode(chr(11))
 
         # extract Subrs
-        c = reader.PSbytes_tokenizer(self._data2, b"/Subrs")
+        c = reader.PStokenizer(self._data2, "/Subrs")
         self.subrsstart = c.pos
         arraycount = c.getint()
-        token = c.gettoken(); assert token == b"array"
+        token = c.gettoken(); assert token == "array"
         self.subrs = []
         for i in range(arraycount):
-            token = c.gettoken(); assert token == b"dup"
+            token = c.gettoken(); assert token == "dup"
             token = c.getint(); assert token == i
             size = c.getint()
             if not i:
@@ -740,8 +739,8 @@ class T1file:
                 token = c.gettoken(); assert token == self.subrrdtoken
             self.subrs.append(c.getbytes(size))
             token = c.gettoken()
-            if token == b"noaccess":
-                token = token + b" " + c.gettoken()
+            if token == "noaccess":
+                token = "%s %s" % (token, c.gettoken())
             if not i:
                 self.subrnptoken = token
             else:
@@ -760,15 +759,15 @@ class T1file:
         # extract glyphs
         self.glyphs = {}
         self.glyphlist = [] # we want to keep the order of the glyph names
-        c = reader.PSbytes_tokenizer(self._data2, b"/CharStrings")
+        c = reader.PStokenizer(self._data2, "/CharStrings")
         self.charstringsstart = c.pos
         c.getint()
-        token = c.gettoken(); assert token == b"dict"
-        token = c.gettoken(); assert token == b"dup"
-        token = c.gettoken(); assert token == b"begin"
-        first = True
-        while True:
-            chartoken = c.gettoken().decode("ascii")
+        token = c.gettoken(); assert token == "dict"
+        token = c.gettoken(); assert token == "dup"
+        token = c.gettoken(); assert token == "begin"
+        first = 1
+        while 1:
+            chartoken = c.gettoken()
             if chartoken == "end":
                 break
             assert chartoken[0] == "/"
@@ -783,7 +782,7 @@ class T1file:
                 self.glyphndtoken = c.gettoken()
             else:
                 token = c.gettoken(); assert token == self.glyphndtoken
-            first = False
+            first = 0
         self.charstringsend = c.pos
         assert not self.subrs or self.subrrdtoken == self.glyphrdtoken
 
@@ -804,9 +803,9 @@ class T1file:
             elif 251 <= x <= 254: # mid size ints
                 cmds.append(-((x - 251)*256) - code.pop(0) - 108)
             else: # x = 255, i.e. full size ints
-                y = ((code.pop(0)*256+code.pop(0))*256+code.pop(0))*256+code.pop(0)
-                if y > (1 << 31):
-                    cmds.append(y - (1 << 32))
+                y = ((code.pop(0)*256l+code.pop(0))*256+code.pop(0))*256+code.pop(0)
+                if y > (1l << 31):
+                    cmds.append(y - (1l << 32))
                 else:
                     cmds.append(y)
         return cmds
@@ -832,7 +831,7 @@ class T1file:
                     code.append(b)
                 else:
                     if cmd < 0:
-                        cmd += 1 << 32
+                        cmd += 1l << 32
                     cmd, x4 = divmod(cmd, 256)
                     cmd, x3 = divmod(cmd, 256)
                     x1, x2 = divmod(cmd, 256)
@@ -924,9 +923,7 @@ class T1file:
         glyphs is a dict containing those glyph names as keys,
         which are to be contained in the charstringsstring to be created.
         If glyphs is None, all glyphs in self.glyphs will be used."""
-        w = writer.writer(io.BytesIO())
-
-        def addsubrs(subrs):
+        def addsubrs(subrs, result):
             if subrs is not None:
                 # some adjustments to the subrs dict
                 if subrs:
@@ -945,46 +942,34 @@ class T1file:
                 subrsmax = len(self.subrs) - 1
 
             # build the string from all selected subrs
-            w.write("%d array\n" % (subrsmax + 1))
+            result.append("%d array\n" % (subrsmax + 1))
             for subr in range(subrsmax+1):
                 if subr in subrs:
                     code = self.subrs[subr]
                 else:
                     code = self.emptysubr
-                w.write("dup %d %d " % (subr, len(code)))
-                w.write_bytes(self.subrrdtoken)
-                w.write_bytes(b" ")
-                w.write_bytes(code)
-                w.write_bytes(b" ")
-                w.write_bytes(self.subrnptoken)
-                w.write_bytes(b"\n")
+                result.append("dup %d %d %s %s %s\n" % (subr, len(code), self.subrrdtoken, code, self.subrnptoken))
 
-        def addcharstrings(glyphs):
-            w.write("%d dict dup begin\n" % (glyphs is None and len(self.glyphlist) or len(glyphs)))
+        def addcharstrings(glyphs, result):
+            result.append("%d dict dup begin\n" % (glyphs is None and len(self.glyphlist) or len(glyphs)))
             for glyph in self.glyphlist:
                 if glyphs is None or glyph in glyphs:
-                    w.write("/%s %d " % (glyph, len(self.glyphs[glyph])))
-                    w.write_bytes(self.glyphrdtoken)
-                    w.write_bytes(b" ")
-                    w.write_bytes(self.glyphs[glyph])
-                    w.write_bytes(b" ")
-                    w.write_bytes(self.glyphndtoken)
-                    w.write_bytes(b"\n")
-            w.write("end\n")
+                    result.append("/%s %d %s %s %s\n" % (glyph, len(self.glyphs[glyph]), self.glyphrdtoken, self.glyphs[glyph], self.glyphndtoken))
+            result.append("end\n")
 
         if self.subrsstart < self.charstringsstart:
-            w.write_bytes(self._data2[:self.subrsstart])
-            addsubrs(subrs)
-            w.write_bytes(self._data2[self.subrsend:self.charstringsstart])
-            addcharstrings(glyphs)
-            w.write_bytes(self._data2[self.charstringsend:])
+            result = [self._data2[:self.subrsstart]]
+            addsubrs(subrs, result)
+            result.append(self._data2[self.subrsend:self.charstringsstart])
+            addcharstrings(glyphs, result)
+            result.append(self._data2[self.charstringsend:])
         else:
-            w.write_bytes(self._data2[:self.charstringsstart])
-            addcharstrings(glyphs)
-            w.write_bytes(self._data2[self.charstringsend:self.subrsstart])
-            addsubrs(subrs)
-            w.write_bytes(self._data2[self.subrsend:])
-        return w.file.getvalue()
+            result = [self._data2[:self.charstringsstart]]
+            addcharstrings(glyphs, result)
+            result.append(self._data2[self.charstringsend:self.subrsstart])
+            addsubrs(subrs, result)
+            result.append(self._data2[self.subrsend:])
+        return "".join(result)
 
     def getdata2eexec(self):
         if self._data2eexec:
@@ -993,8 +978,7 @@ class T1file:
         return self._eexecencode(self.getdata2())
 
     newlinepattern = re.compile("\s*[\r\n]\s*")
-    uniqueidstrpattern = re.compile("%?/UniqueID\s+\d+\s+def\s+")
-    uniqueidbytespattern = re.compile(b"%?/UniqueID\s+\d+\s+def\s+")
+    uniqueidpattern = re.compile("%?/UniqueID\s+\d+\s+def\s+")
         # when UniqueID is commented out (as in modern latin), prepare to remove the comment character as well
 
     def getstrippedfont(self, glyphs, charcodes):
@@ -1008,8 +992,8 @@ class T1file:
             glyphs.add(self.encoding[charcode])
 
         # collect information about used glyphs and subrs
-        seacglyphs = set()
-        subrs = set()
+        seacglyphs = pycompat.set()
+        subrs = pycompat.set()
         for glyph in glyphs:
             self.gatherglyphcalls(glyph, seacglyphs, subrs, T1context(self))
         # while we have gathered all subrs for the seacglyphs alreadys, we
@@ -1027,10 +1011,10 @@ class T1file:
                     encodingstrings.append("dup %i /%s put\n" % (char, glyph))
             data1 = self.data1[:self.encodingstart] + "\n" + "".join(encodingstrings) + self.data1[self.encodingend:]
         data1 = self.newlinepattern.subn("\n", data1)[0]
-        data1 = self.uniqueidstrpattern.subn("", data1)[0]
+        data1 = self.uniqueidpattern.subn("", data1)[0]
 
         # strip data2
-        data2 = self.uniqueidbytespattern.subn(b"", self.getdata2(subrs, glyphs))[0]
+        data2 = self.uniqueidpattern.subn("", self.getdata2(subrs, glyphs))[0]
 
         # strip data3
         data3 = self.newlinepattern.subn("\n", self.data3)[0]
@@ -1098,8 +1082,8 @@ class T1file:
         file.write(data1)
         data2eexechex = binascii.b2a_hex(self.getdata2eexec())
         linelength = 64
-        for i in range((len(data2eexechex)-1)//linelength + 1):
-            file.write_bytes(data2eexechex[i*linelength: i*linelength+linelength])
+        for i in range((len(data2eexechex)-1)/linelength + 1):
+            file.write(data2eexechex[i*linelength: i*linelength+linelength])
             file.write("\n")
         file.write(data3)
 
@@ -1137,7 +1121,7 @@ class T1file:
                  .replace(" ", "")) == "0"*512 + "cleartomark":
             data3 = ""
 
-        data = self.data1.encode("ascii", errors="surrogateescape") + data2eexec + data3.encode("ascii", errors="surrogateescape")
+        data = self.data1 + data2eexec + data3
         if writer.compress and haszlib:
             data = zlib.compress(data)
 
@@ -1150,7 +1134,7 @@ class T1file:
             file.write("/Filter /FlateDecode\n")
         file.write(">>\n"
                    "stream\n")
-        file.write_bytes(data)
+        file.write(data)
         file.write("\n"
                    "endstream\n")
 
@@ -1167,10 +1151,10 @@ def from_PFA_bytes(bytes):
     except ValueError:
        raise FontFormatError
 
-    data1 = bytes[:m1].decode("ascii", errors="surrogateescape")
-    data2eexec = binascii.a2b_hex(bytes[m1: m2].replace(" ", "").replace("\r", "").replace("\n", ""))
-    data3 = bytes[m2:].decode("ascii", errors="surrogateescape")
-    return T1file(data1, data2eexec, data3)
+    data1 = bytes[:m1]
+    data2 = binascii.a2b_hex(bytes[m1: m2].replace(" ", "").replace("\r", "").replace("\n", ""))
+    data3 = bytes[m2:]
+    return T1file(data1, data2, data3)
 
 def from_PFA_filename(filename):
     """create a T1file instance from PFA font file of given name"""
@@ -1185,10 +1169,10 @@ def from_PFB_bytes(bytes):
     def pfblength(s):
         if len(s) != 4:
             raise ValueError("invalid string length")
-        return (s[0] +
-                s[1]*256 +
-                s[2]*256*256 +
-                s[3]*256*256*256)
+        return (ord(s[0]) +
+                ord(s[1])*256 +
+                ord(s[2])*256*256 +
+                ord(s[3])*256*256*256)
     class consumer:
         def __init__(self, bytes):
             self.bytes = bytes
@@ -1200,26 +1184,26 @@ def from_PFB_bytes(bytes):
 
     consume = consumer(bytes)
     mark = consume(2)
-    if mark != b"\200\1":
+    if mark != "\200\1":
         raise FontFormatError
-    data1 = consume(pfblength(consume(4))).decode("ascii", errors="surrogateescape")
+    data1= consume(pfblength(consume(4)))
     mark = consume(2)
-    if mark != b"\200\2":
+    if mark != "\200\2":
         raise FontFormatError
-    data2eexec = b""
-    while mark == b"\200\2":
-        data2eexec = data2eexec + consume(pfblength(consume(4)))
+    data2 = ""
+    while mark == "\200\2":
+        data2 = data2 + consume(pfblength(consume(4)))
         mark = consume(2)
-    if mark != b"\200\1":
+    if mark != "\200\1":
         raise FontFormatError
-    data3 = consume(pfblength(consume(4))).decode("ascii", errors="surrogateescape")
+    data3 = consume(pfblength(consume(4)))
     mark = consume(2)
-    if mark != b"\200\3":
+    if mark != "\200\3":
         raise FontFormatError
     if consume(1):
         raise FontFormatError
 
-    return T1file(data1, data2eexec, data3)
+    return T1file(data1, data2, data3)
 
 def from_PFB_filename(filename):
     """create a T1file instance from PFB font file of given name"""
@@ -1229,10 +1213,10 @@ def from_PFB_filename(filename):
     return t1file
 
 def from_PF_bytes(bytes):
-    #try:
-        return from_PFB_bytes(bytes)
-    #except FontFormatError:
-    #    return from_PFA_bytes(bytes)
+    try:
+         return from_PFB_bytes(bytes)
+    except FontFormatError:
+         return from_PFA_bytes(bytes)
 
 def from_PF_filename(filename):
     """create a T1file instance from PFA or PFB font file of given name"""

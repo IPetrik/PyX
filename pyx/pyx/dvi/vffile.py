@@ -21,6 +21,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
 from pyx import reader
+import texfont
 
 _VF_LONG_CHAR  = 242   # character packet (long version)
 _VF_FNTDEF1234 = 243   # font definition
@@ -41,7 +42,7 @@ class vffile:
         self.widths = {}           # widths of defined chars
         self.chardefs = {}         # dvi chunks for defined chars
 
-        afile = reader.bytesreader(file.read())
+        afile = reader.stringreader(file.read())
 
         cmd = afile.readuchar()
         if cmd == _VF_PRE:
@@ -52,7 +53,7 @@ class vffile:
         else:
             raise VFError
 
-        while True:
+        while 1:
             cmd = afile.readuchar()
             if cmd >= _VF_FNTDEF1234 and cmd < _VF_FNTDEF1234 + 4:
                 # font definition
@@ -67,20 +68,19 @@ class vffile:
                 c = afile.readint32()
                 s = afile.readint32()     # relative scaling used for font (fix_word)
                 d = afile.readint32()     # design size of font
-                fontname = afile.read(afile.readuchar() + afile.readuchar()).decode("ascii")
+                fontname = afile.read(afile.readuchar() + afile.readuchar())
 
                 # rescaled size of font: s is relative to the scaling
                 # of the virtual font itself.  Note that realscale has
                 # to be a fix_word (like s)
                 # XXX: check rounding
-                reals = int(round(self.scale * (16*self.ds/16777216) * s))
+                reals = int(round(self.scale * (16*self.ds/16777216L) * s))
 
                 # print ("defining font %s -- VF scale: %g, VF design size: %d, relative font size: %d => real size: %d" %
                 #        (fontname, self.scale, self.ds, s, reals)
                 #        )
 
                 # XXX allow for virtual fonts here too
-                from . import texfont
                 self.fonts[num] =  texfont.TeXfont(fontname, c, reals, d, self.tfmconv, self.pyxconv, self.debug > 1)
             elif cmd == _VF_LONG_CHAR:
                 # character packet (long form)

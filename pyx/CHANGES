@@ -1,5 +1,4 @@
-0.???? (2013/??/??):
-  - Requires at least Python 3.3 
+0.???? (201?/??/??):
   - filelocator module:
     - cygwin LaTeX with windows python patch (thanks to Sybren A. Stüvel)
   - graph styles:
@@ -20,8 +19,6 @@
   - trafos and styles are no longer canvasitems
   - style module:
     - fillrules are now fillstyles and handled within the PS/PDF context
-  - text module:
-    - new texenc setting (TODO documentation)
 
 0.12.1 (2012/10/26):
   - graph styles:

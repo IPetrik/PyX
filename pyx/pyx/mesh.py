@@ -37,7 +37,7 @@
 
 
 import struct, binascii, zlib, os, tempfile
-from . import bbox, baseclasses, color, pdfwriter, unit
+import bbox, canvasitem, color, pdfwriter, unit
 
 
 class node_pt:
@@ -71,10 +71,10 @@ class PDFGenericResource(pdfwriter.PDFobject):
         self.content = content
 
     def write(self, file, writer, registry):
-        file.write_bytes(self.content)
+        file.write(self.content)
 
 
-class mesh(baseclasses.canvasitem):
+class mesh(canvasitem.canvasitem):
 
     def __init__(self, elements, check=1):
         self.elements = elements
@@ -102,15 +102,18 @@ class mesh(baseclasses.canvasitem):
                             max([node.coords_pt[1] for element in self.elements for node in element.nodes]))
 
     def data(self, bbox):
-        return b"".join([b"\000" + coords24bit_pt(node.coords_pt[0], bbox.llx_pt, bbox.urx_pt) +
-                                   coords24bit_pt(node.coords_pt[1], bbox.lly_pt, bbox.ury_pt) +
-                                   node.value.to8bitbytes()
-                         for element in self.elements for node in element.nodes])
+        return "".join(["\000%s%s%s" % (coords24bit_pt(node.coords_pt[0], bbox.llx_pt, bbox.urx_pt),
+                                        coords24bit_pt(node.coords_pt[1], bbox.lly_pt, bbox.ury_pt),
+                                        node.value.to8bitstring())
+                        for element in self.elements for node in element.nodes])
 
     def processPS(self, file, writer, context, registry, bbox):
         if writer.mesh_as_bitmap:
             from pyx import bitmap, canvas
-            from PIL import Image
+            try:
+                from PIL import Image
+            except ImportError:
+                import Image
             c = canvas.canvas()
             c.insert(self)
             i = Image.open(c.pipeGS("pngalpha", resolution=writer.mesh_as_bitmap_resolution, seekable=True))
@@ -133,14 +136,17 @@ class mesh(baseclasses.canvasitem):
 /DataSource currentfile /ASCIIHexDecode filter /FlateDecode filter
 >> shfill\n""" % (self.elements[0].nodes[0].value.colorspacestring(),
                   thisbbox.llx_pt, thisbbox.urx_pt, thisbbox.lly_pt, thisbbox.ury_pt,
-                  " ".join(["0 1" for value in self.elements[0].nodes[0].value.to8bitbytes()])))
-            file.write_bytes(binascii.b2a_hex(zlib.compress(self.data(thisbbox))))
+                  " ".join(["0 1" for value in self.elements[0].nodes[0].value.to8bitstring()])))
+            file.write(binascii.b2a_hex(zlib.compress(self.data(thisbbox))))
             file.write(">\n")
 
     def processPDF(self, file, writer, context, registry, bbox):
         if writer.mesh_as_bitmap:
             from pyx import bitmap, canvas
-            from PIL import Image
+            try:
+                from PIL import Image
+            except ImportError:
+                import Image
             c = canvas.canvas()
             c.insert(self)
             i = Image.open(c.pipeGS("pngalpha", resolution=writer.mesh_as_bitmap_resolution, seekable=True))
@@ -161,7 +167,7 @@ class mesh(baseclasses.canvasitem):
             else:
                 filter = ""
             name = "shading-%s" % id(self)
-            shading = PDFGenericResource("shading", name, ("""<<
+            shading = PDFGenericResource("shading", name, """<<
 /ShadingType 4
 /ColorSpace %s
 /BitsPerCoordinate 24
@@ -171,10 +177,11 @@ class mesh(baseclasses.canvasitem):
 /Length %i
 %s>>
 stream
-""" %            (self.elements[0].nodes[0].value.colorspacestring(),
+%s
+endstream\n""" % (self.elements[0].nodes[0].value.colorspacestring(),
                   thisbbox.llx_pt, thisbbox.urx_pt, thisbbox.lly_pt, thisbbox.ury_pt,
-                  " ".join(["0 1" for value in self.elements[0].nodes[0].value.to8bitbytes()]),
-                  len(d), filter)).encode('ascii') + d + b"\nendstream\n")
+                  " ".join(["0 1" for value in self.elements[0].nodes[0].value.to8bitstring()]),
+                  len(d), filter, d))
             registry.add(shading)
             registry.addresource("Shading", name, shading)
             file.write("/%s sh\n" % name)
